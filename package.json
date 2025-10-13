@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.51.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@uploadthing/react": "^7.3.3",
     "axios": "^1.12.2",
     "lucide-react": "^0.545.0",
     "react": "^19.1.1",
