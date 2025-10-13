@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from "@clerk/clerk-react";
+import HomePage from './pages/HomePage';
+import RootLayout from './Layouts/RootLayout';
+import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailPage from './pages/ProjectDetailPage'; 
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { userId, isLoaded } = useAuth();
+
+  // The most important part:
+  // While Clerk is checking the user's session, we render a loading screen.
+  // This prevents any other components (like HomePage with its SignInButton)
+  // from rendering prematurely.
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        Loading...
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Routes>
+      {/*
+        If the user is logged in, any attempt to visit the homepage '/'
+        will automatically redirect them to their '/projects' dashboard.
+      */}
+      <Route 
+        path="/" 
+        element={userId ? <Navigate to="/projects" /> : <HomePage />} 
+      />
+
+      {/* All protected routes are nested inside the RootLayout.
+        The RootLayout itself will handle redirecting unauthenticated users.
+      */}
+      <Route element={<RootLayout />}>
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+      </Route>
+    </Routes>
+  );
 }
 
-export default App
+export default App;
