@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, act, within } from "@testing-library/react";
+import { screen, waitFor, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { clerkMock, apiClientMock } from "./helpers.jsx";
+import { render, confirmDialog, clerkMock, apiClientMock } from "./helpers.jsx";
 import apiClient from "../utils/apiClient";
 import KnowledgeBaseSidebar from "../components/projects/KnowledgeBaseSidebar";
 
@@ -139,36 +139,38 @@ describe("polling", () => {
 });
 
 describe("delete and retry", () => {
-  it("D08 delete asks for confirmation and does nothing when cancelled", async () => {
+  it("D08 delete opens a dialog and does nothing when cancelled", async () => {
     apiClient.get.mockResolvedValue({ data: [doc()] });
-    vi.spyOn(window, "confirm").mockReturnValue(false);
     const user = userEvent.setup();
     renderSidebar();
     await user.click(await screen.findByLabelText("Delete report.pdf"));
-    expect(window.confirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("dialog")).toHaveAccessibleName(/report\.pdf/);
+    await user.click(confirmDialog().getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(apiClient.delete).not.toHaveBeenCalled();
     expect(screen.getByText("report.pdf")).toBeInTheDocument();
   });
 
-  it("D09 a confirmed delete calls the API and removes the document", async () => {
+  it("D09 a confirmed delete calls the API, removes the document and shows a notice", async () => {
     apiClient.get.mockResolvedValue({ data: [doc(), doc({ _id: "d2", name: "other.pdf" })] });
     apiClient.delete.mockResolvedValue({ data: {} });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     renderSidebar();
     await user.click(await screen.findByLabelText("Delete report.pdf"));
+    await user.click(confirmDialog().getByRole("button", { name: "Delete document" }));
     expect(apiClient.delete).toHaveBeenCalledWith("/projects/p1/documents/d1", { headers: { Authorization: "Bearer test-token" } });
     await waitFor(() => expect(screen.queryByText("report.pdf")).not.toBeInTheDocument());
     expect(screen.getByText("other.pdf")).toBeInTheDocument();
+    expect(await screen.findByText("report.pdf deleted.")).toBeInTheDocument();
   });
 
   it("D10 a failed delete keeps the document and shows an error", async () => {
     apiClient.get.mockResolvedValue({ data: [doc()] });
     apiClient.delete.mockRejectedValue(new Error("500"));
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     renderSidebar();
     await user.click(await screen.findByLabelText("Delete report.pdf"));
+    await user.click(confirmDialog().getByRole("button", { name: "Delete document" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not delete report.pdf");
     expect(screen.getByText("report.pdf")).toBeInTheDocument();
   });
@@ -253,6 +255,6 @@ describe("upload overlays", () => {
     apiClient.get.mockResolvedValue({ data: [doc(), doc({ _id: "d2", name: "b.pdf" })] });
     renderSidebar();
     const heading = await screen.findByText("Sources");
-    expect(within(heading.parentElement).getByText("2")).toBeInTheDocument();
+    await waitFor(() => expect(within(heading.parentElement).getByText("2")).toBeInTheDocument());
   });
 });

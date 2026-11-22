@@ -1,9 +1,21 @@
-import { useState } from "react";
-import { X, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, Sparkles, Loader2 } from "lucide-react";
 
-export default function CreateProjectModal({ isOpen, onClose, onCreateProject, isLoading }) {
+const NAME_LIMIT = 60;
+const DESCRIPTION_LIMIT = 200;
+
+function ProjectForm({ onClose, onCreateProject, isLoading }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+
+  // Escape closes the popup, unless a project is being created.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && !isLoading) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isLoading, onClose]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -12,71 +24,110 @@ export default function CreateProjectModal({ isOpen, onClose, onCreateProject, i
     }
   };
 
-  if (!isOpen) return null;
+  const counter = (value, limit) => (
+    <span className={`text-xs tabular-nums ${value.length > limit * 0.9 ? "text-amber-300" : "text-gray-500"}`}>
+      {value.length}/{limit}
+    </span>
+  );
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    <div
+      className="anim-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4 backdrop-blur-md"
       onClick={onClose}
     >
-      <div 
-        className="bg-[#1a1a1a] border border-gray-800 rounded-2xl w-full max-w-md shadow-2xl"
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-project-title"
+        className="anim-scale-in glass relative w-full max-w-md overflow-hidden rounded-3xl"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center">
-              <Sparkles size={20} className="text-blue-400" />
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-40 w-72 -translate-x-1/2 rounded-full bg-brand-500/25 blur-3xl" />
+
+        <div className="relative flex items-center justify-between border-b border-white/[0.07] p-6">
+          <div className="flex items-center gap-3.5">
+            <div className="pulse-ring flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 shadow-lg">
+              <Sparkles size={20} className="text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-medium text-white">Create new project</h2>
+              <h2 id="create-project-title" className="text-lg font-semibold text-white">Create new project</h2>
               <p className="text-sm text-gray-400">Start organizing your knowledge</p>
             </div>
           </div>
-          <button onClick={onClose} disabled={isLoading} className="p-2 text-gray-400 hover:text-gray-300 rounded-lg hover:bg-gray-800">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            aria-label="Close"
+            className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-white/10 hover:text-white"
+          >
             <X size={20} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="relative space-y-6 p-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">Project name</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-300">Project name</label>
+              {counter(name, NAME_LIMIT)}
+            </div>
             <input
               type="text"
               id="name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value.slice(0, NAME_LIMIT))}
               placeholder="e.g., Research Analysis, Meeting Notes..."
               disabled={isLoading}
-              className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-white"
+              className="input-glow w-full rounded-xl px-4 py-3 text-white placeholder:text-gray-600"
               required
               autoFocus
             />
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">Description (optional)</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-300">Description (optional)</label>
+              {counter(description, DESCRIPTION_LIMIT)}
+            </div>
             <textarea
               id="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_LIMIT))}
               placeholder="What will this project be about?"
               rows={3}
               disabled={isLoading}
-              className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40 text-white"
+              className="input-glow w-full resize-none rounded-xl px-4 py-3 text-white placeholder:text-gray-600"
             />
           </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} disabled={isLoading} className="flex-1 px-4 py-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-xl font-medium text-gray-300">
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="btn-ghost flex-1 rounded-xl px-4 py-3 font-medium text-gray-300"
+            >
               Cancel
             </button>
-            <button type="submit" disabled={!name.trim() || isLoading} className="flex-1 px-4 py-3 bg-white hover:bg-gray-100 disabled:bg-gray-600 text-black rounded-xl font-medium flex items-center justify-center gap-2">
-              {isLoading ? "Creating..." : "Create project"}
+            <button
+              type="submit"
+              disabled={!name.trim() || isLoading}
+              className="btn-primary flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Creating...
+                </>
+              ) : (
+                "Create project"
+              )}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+}
+
+// The form is created each time the popup opens, so it never shows the text of an earlier project.
+export default function CreateProjectModal({ isOpen, ...rest }) {
+  if (!isOpen) return null;
+  return <ProjectForm {...rest} />;
 }

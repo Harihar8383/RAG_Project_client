@@ -1,27 +1,167 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
-import { ArrowLeft, Bot, Loader2, MessageSquare, Send, Square, User } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUp,
+  Check,
+  CheckCircle2,
+  Copy,
+  FileText,
+  Lightbulb,
+  ListChecks,
+  Loader2,
+  Search,
+  Sparkles,
+  Square,
+  User,
+  Wand2,
+} from "lucide-react";
 import apiClient from "../../utils/apiClient";
 import { readEventStream } from "../../utils/sse";
 import FormattedText from "./FormattedText";
+import Logo from "../ui/Logo";
+import Skeleton from "../ui/Skeleton";
+import { useToast } from "../ui/toast-context";
 
 const INTERRUPTED = "This answer was interrupted.";
+const MESSAGE_LIMIT = 4000;
+
+const SUGGESTIONS = [
+  { icon: ListChecks, text: "Summarize my documents" },
+  { icon: Lightbulb, text: "What are the key points?" },
+  { icon: Search, text: "List any dates, names or numbers that matter" },
+];
 
 function SourceList({ sources }) {
+  const [openLabel, setOpenLabel] = useState(null);
+  const box = useRef(null);
+
+  // A click outside the list, or the Escape key, closes the open popup.
+  useEffect(() => {
+    if (!openLabel) return undefined;
+    const onDown = (e) => {
+      if (box.current && !box.current.contains(e.target)) setOpenLabel(null);
+    };
+    const onKey = (e) => e.key === "Escape" && setOpenLabel(null);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openLabel]);
+
   if (!sources || sources.length === 0) return null;
+  const open = sources.find((s) => s.label === openLabel);
+
   return (
-    <div className="mt-3 pt-3 border-t border-gray-700" data-testid="sources">
-      <p className="text-xs font-medium text-gray-400 mb-2">Sources</p>
-      <ul className="flex flex-wrap gap-2">
-        {sources.map((s) => (
-          <li key={s.label} className="text-xs bg-[#252525] border border-gray-700 rounded px-2 py-1 text-gray-300">
-            <span className="text-blue-400 font-medium">{s.label}</span> {s.fileName}
-            {s.page != null ? ` (page ${s.page})` : ""}
+    <div ref={box} className="relative mt-4 border-t border-white/10 pt-3" data-testid="sources">
+      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-gray-500">Sources</p>
+      <ul className="stagger flex flex-wrap gap-2">
+        {sources.map((s, i) => (
+          <li key={s.label} style={{ "--i": i }}>
+            <button
+              type="button"
+              aria-expanded={openLabel === s.label}
+              onClick={() => setOpenLabel(openLabel === s.label ? null : s.label)}
+              className={`rounded-lg border px-2.5 py-1 text-xs text-gray-300 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-400/60 hover:bg-brand-500/10 ${
+                openLabel === s.label ? "border-brand-400/70 bg-brand-500/15" : "border-white/10 bg-white/[0.04]"
+              }`}
+            >
+              <span className="font-semibold text-brand-400">{s.label}</span> {s.fileName}
+              {s.page != null ? ` (page ${s.page})` : ""}
+            </button>
           </li>
         ))}
       </ul>
+      {open && (
+        <div role="dialog" aria-label={`Source ${open.label}`} className="anim-scale-in glass absolute left-0 top-full z-20 mt-2 w-72 rounded-xl p-4 text-left">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/20 text-brand-400">
+              <FileText size={18} />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-white">{open.fileName}</p>
+              <p className="text-xs text-gray-400">{open.page != null ? `Page ${open.page}` : "Whole file"}</p>
+            </div>
+          </div>
+          <p className="text-xs leading-relaxed text-gray-400">
+            The answer marks this passage with the badge <b className="text-brand-400">{open.label}</b>. Manage the file in the Knowledge Base on the right.
+          </p>
+        </div>
+      )}
     </div>
+  );
+}
+
+// Shows the two stages that the server reports before the first word of the answer arrives.
+function Pipeline({ status }) {
+  const steps = [
+    { key: "retrieving", label: "Searching your documents", icon: Search },
+    { key: "generating", label: "Writing the answer", icon: Wand2 },
+  ];
+  const activeIndex = status === "generating" ? 1 : 0;
+  return (
+    <div role="status" className="min-w-[15rem]">
+      <span className="sr-only">Thinking...</span>
+      <ul className="space-y-2.5">
+        {steps.map((step, i) => {
+          const done = i < activeIndex;
+          const active = i === activeIndex;
+          return (
+            <li key={step.key} className={`flex items-center gap-2.5 text-sm transition-colors duration-300 ${done ? "text-emerald-300" : active ? "text-gray-100" : "text-gray-600"}`}>
+              {done ? (
+                <CheckCircle2 size={16} className="anim-pop" />
+              ) : active ? (
+                <Loader2 size={16} className="animate-spin text-brand-400" />
+              ) : (
+                <step.icon size={16} />
+              )}
+              {step.label}
+              {active && (
+                <span className="ml-1 flex gap-1" aria-hidden="true">
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <div className="progress-track progress-indeterminate mt-3" aria-hidden="true" />
+    </div>
+  );
+}
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const toast = useToast();
+  const timer = useRef(null);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Answer copied.");
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Could not copy the answer.");
+    }
+  };
+
+  return (
+    <button
+      onClick={copy}
+      aria-label="Copy answer"
+      className="rounded-lg p-1.5 text-gray-500 opacity-0 transition-all hover:bg-white/10 hover:text-white focus:opacity-100 group-hover/msg:opacity-100"
+    >
+      {copied ? <Check size={14} className="anim-pop text-emerald-300" /> : <Copy size={14} />}
+    </button>
   );
 }
 
@@ -36,6 +176,7 @@ export default function ChatInterface() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const abortRef = useRef(null);
   const endRef = useRef(null);
+  const inputRef = useRef(null);
 
   const base = `/projects/${projectId}/chats/${chatId}/messages`;
 
@@ -68,6 +209,14 @@ export default function ChatInterface() {
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ behavior: "smooth" });
   }, [messages, status]);
+
+  // The input grows with its text, up to about six lines.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight || 0, 160)}px`;
+  }, [input]);
 
   const updateLast = (patch) =>
     setMessages((prev) => prev.map((m, i) => (i === prev.length - 1 ? { ...m, ...(typeof patch === "function" ? patch(m) : patch) } : m)));
@@ -129,87 +278,157 @@ export default function ChatInterface() {
     }
   };
 
+  const pickSuggestion = (text) => {
+    setInput(text);
+    inputRef.current?.focus();
+  };
+
   const busy = status !== "idle";
   const lastIndex = messages.length - 1;
+  const nearLimit = input.length > MESSAGE_LIMIT * 0.85;
 
   return (
-    <div className="flex-1 flex flex-col bg-[#1a1a1a] rounded-xl overflow-hidden border border-gray-700">
-      <div className="px-6 py-4 border-b border-gray-700 flex items-center gap-3">
-        <Link to={`/projects/${projectId}`} aria-label="Back to conversations" className="text-gray-400 hover:text-gray-200">
+    <div className="glass relative flex flex-1 flex-col overflow-hidden rounded-2xl">
+      <div className="relative flex items-center gap-3 border-b border-white/[0.07] px-5 py-3.5">
+        <Link
+          to={`/projects/${projectId}`}
+          aria-label="Back to conversations"
+          className="rounded-lg p-1.5 text-gray-400 transition-all hover:-translate-x-0.5 hover:bg-white/10 hover:text-white"
+        >
           <ArrowLeft size={18} />
         </Link>
-        <h2 className="text-sm font-medium text-gray-100">Conversation</h2>
+        <span className={`flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.06] ${busy ? "pulse-ring" : ""}`}>
+          <Logo showText={false} size={20} />
+        </span>
+        <h2 className="text-sm font-semibold text-gray-100">Conversation</h2>
+        {busy && (
+          <span className="anim-fade-in ml-auto flex items-center gap-2 rounded-full bg-brand-500/15 px-3 py-1 text-xs text-brand-400">
+            <Loader2 size={12} className="animate-spin" />
+            {status === "generating" ? "Writing the answer" : "Searching your documents"}
+          </span>
+        )}
+        {busy && <div className="progress-track progress-indeterminate absolute inset-x-0 bottom-0 h-[2px] rounded-none" aria-hidden="true" />}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 space-y-5 overflow-y-auto px-5 py-6 sm:px-8">
         {loadingHistory ? (
-          <p className="text-gray-400 text-sm">Loading conversation...</p>
+          <div role="status" aria-label="Loading conversation" className="space-y-5">
+            <Skeleton className="ml-auto h-10 w-2/5" />
+            <Skeleton className="h-20 w-3/5" />
+            <Skeleton className="ml-auto h-10 w-1/3" />
+          </div>
         ) : messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
-            <MessageSquare size={28} className="text-gray-500 mb-3" />
-            <h3 className="text-gray-200 font-medium">Start the conversation</h3>
-            <p className="text-gray-400 text-sm mt-1 max-w-xs">Ask a question about the documents in your knowledge base to get started.</p>
+          <div className="anim-fade-up flex h-full flex-col items-center justify-center text-center">
+            <div className="anim-float relative mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-500/30 to-violet-500/20 ring-1 ring-white/10">
+              <div className="pulse-ring absolute inset-0 rounded-3xl" />
+              <Sparkles size={32} className="text-brand-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-100">Start the conversation</h3>
+            <p className="mt-2 max-w-sm text-sm text-gray-400">Ask a question about the documents in your knowledge base to get started.</p>
+            <ul className="stagger mt-7 flex max-w-xl flex-wrap justify-center gap-2.5">
+              {SUGGESTIONS.map((s, i) => (
+                <li key={s.text} style={{ "--i": i + 2 }}>
+                  <button
+                    onClick={() => pickSuggestion(s.text)}
+                    className="btn-ghost flex items-center gap-2 rounded-full px-4 py-2 text-sm text-gray-200 hover:-translate-y-0.5"
+                  >
+                    <s.icon size={14} className="text-brand-400" />
+                    {s.text}
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : (
-          messages.map((m, i) => (
-            <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              {m.role === "assistant" && <Bot size={18} className="text-gray-400 mt-2 shrink-0" />}
-              <div
-                className={`max-w-[80%] rounded-xl px-4 py-3 text-sm ${
-                  m.role === "user" ? "bg-white text-black" : "bg-[#202020] text-gray-200"
-                }`}
-              >
-                {m.role === "assistant" && !m.content && busy && i === lastIndex ? (
-                  <span className="flex items-center gap-2 text-gray-400">
-                    <Loader2 size={14} className="animate-spin" /> Thinking...
+          messages.map((m, i) => {
+            const mine = m.role === "user";
+            const live = busy && i === lastIndex;
+            return (
+              <div key={i} className={`group/msg anim-fade-up flex gap-3 ${mine ? "justify-end" : "justify-start"}`}>
+                {!mine && (
+                  <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] ring-1 ring-white/10">
+                    <Logo showText={false} size={18} />
                   </span>
-                ) : m.role === "assistant" ? (
-                  <FormattedText text={m.content} />
-                ) : (
-                  <p className="whitespace-pre-wrap">{m.content}</p>
                 )}
-                {m.role === "assistant" && m.incomplete && !busy && (
-                  <p className="mt-2 text-xs text-amber-400">{INTERRUPTED}</p>
+                <div className={`flex max-w-[82%] items-start gap-1 ${mine ? "flex-row-reverse" : ""}`}>
+                  <div
+                    className={`rounded-2xl px-4 py-3 text-sm shadow-lg ${
+                      mine
+                        ? "rounded-br-md bg-gradient-to-br from-brand-500 to-violet-500 text-white"
+                        : "rounded-tl-md border border-white/[0.07] bg-white/[0.05] text-gray-200"
+                    }`}
+                  >
+                    {!mine && !m.content && live ? (
+                      <Pipeline status={status} />
+                    ) : !mine ? (
+                      <FormattedText text={m.content} streaming={live && status === "generating"} />
+                    ) : (
+                      <p className="whitespace-pre-wrap">{m.content}</p>
+                    )}
+                    {!mine && m.incomplete && !busy && (
+                      <p className="mt-2 text-xs text-amber-300">{INTERRUPTED}</p>
+                    )}
+                    {!mine && <SourceList sources={m.sources} />}
+                  </div>
+                  {!mine && m.content && !live && <CopyButton text={m.content} />}
+                </div>
+                {mine && (
+                  <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/[0.08] text-gray-300">
+                    <User size={16} />
+                  </span>
                 )}
-                {m.role === "assistant" && <SourceList sources={m.sources} />}
               </div>
-              {m.role === "user" && <User size={18} className="text-gray-400 mt-2 shrink-0" />}
-            </div>
-          ))
+            );
+          })
         )}
         <div ref={endRef} />
       </div>
 
       {error && (
-        <p role="alert" className="px-6 pb-2 text-sm text-red-400">
+        <p role="alert" className="anim-fade-up mx-5 mb-2 rounded-xl border border-rose-400/20 bg-rose-500/10 px-4 py-2.5 text-sm text-rose-200">
           {error}
         </p>
       )}
 
-      <div className="p-4 border-t border-gray-700 flex gap-2 items-end">
-        <textarea
-          aria-label="Message"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={onKeyDown}
-          rows={1}
-          placeholder="Ask me anything..."
-          className="flex-1 resize-none max-h-32 bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-        />
-        {busy ? (
-          <button onClick={stop} aria-label="Stop" className="p-3 rounded-lg bg-gray-700 text-white hover:bg-gray-600">
-            <Square size={16} />
-          </button>
-        ) : (
-          <button
-            onClick={send}
-            aria-label="Send"
-            disabled={!input.trim()}
-            className="p-3 rounded-lg bg-white text-black disabled:bg-gray-600 disabled:text-gray-400"
-          >
-            <Send size={16} />
-          </button>
-        )}
+      <div className="border-t border-white/[0.07] p-4">
+        <div className="input-glow flex items-end gap-2 rounded-2xl p-2 focus-within:border-brand-400/70 focus-within:shadow-[0_0_0_4px_rgba(91,124,250,0.18)]">
+          <textarea
+            ref={inputRef}
+            aria-label="Message"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={onKeyDown}
+            rows={1}
+            placeholder="Ask me anything..."
+            className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none"
+          />
+          {busy ? (
+            <button
+              onClick={stop}
+              aria-label="Stop"
+              className="pulse-ring rounded-xl bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+            >
+              <Square size={16} />
+            </button>
+          ) : (
+            <button
+              onClick={send}
+              aria-label="Send"
+              disabled={!input.trim()}
+              className="btn-primary group rounded-xl p-3"
+            >
+              <ArrowUp size={16} className="transition-transform duration-200 group-hover:-translate-y-0.5" />
+            </button>
+          )}
+        </div>
+        <div className="mt-2 flex items-center justify-between px-2 text-[11px] text-gray-500">
+          <span>Enter to send. Shift and Enter for a new line.</span>
+          {nearLimit && (
+            <span className={input.length >= MESSAGE_LIMIT ? "text-rose-300" : "text-amber-300"}>
+              {input.length}/{MESSAGE_LIMIT}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

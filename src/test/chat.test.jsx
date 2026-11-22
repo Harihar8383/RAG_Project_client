@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { clerkMock, apiClientMock, getToken, mockStreamFetch } from "./helpers.jsx";
+import { render, clerkMock, apiClientMock, getToken, mockStreamFetch } from "./helpers.jsx";
 import apiClient from "../utils/apiClient";
 import ChatInterface from "../components/chat/ChatInterface";
 import FormattedText from "../components/chat/FormattedText";

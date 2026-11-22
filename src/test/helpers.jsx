@@ -1,4 +1,20 @@
 import { vi } from "vitest";
+import { render as rtlRender, screen, within } from "@testing-library/react";
+import ToastProvider from "../components/ui/ToastProvider.jsx";
+import ConfirmProvider from "../components/ui/ConfirmProvider.jsx";
+
+// Every test renders inside the same providers as the application.
+export function render(ui, options = {}) {
+  const wrapper = ({ children }) => (
+    <ToastProvider>
+      <ConfirmProvider>{children}</ConfirmProvider>
+    </ToastProvider>
+  );
+  return rtlRender(ui, { wrapper, ...options });
+}
+
+/** Queries inside the open confirmation dialog. */
+export const confirmDialog = () => within(screen.getByRole("dialog"));
 
 // One stable getToken for every test, so effects that depend on it do not run again on each render.
 export const getToken = vi.fn(async () => "test-token");

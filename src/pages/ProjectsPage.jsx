@@ -2,52 +2,92 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import apiClient from "../utils/apiClient";
 import CreateProjectModal from "../components/modals/CreateProjectModal";
-import { Plus, Folder, Search, LayoutGrid, List, Trash2 } from "lucide-react";
+import { Plus, Folder, Search, LayoutGrid, List, Trash2, ArrowUpRight, Sparkles } from "lucide-react";
 import { Link, useOutletContext } from "react-router-dom";
+import Skeleton from "../components/ui/Skeleton";
+import { useToast } from "../components/ui/toast-context";
+import { useConfirm } from "../components/ui/confirm-context";
+import { spotlightMove } from "../components/ui/spotlight";
+
+// Each project gets one of these colours, chosen from its name so that it stays the same between visits.
+const ACCENTS = [
+  "from-brand-500 to-violet-500",
+  "from-cyan-500 to-brand-500",
+  "from-emerald-500 to-cyan-500",
+  "from-fuchsia-500 to-violet-500",
+  "from-amber-400 to-rose-500",
+];
+const accentFor = (name) => ACCENTS[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % ACCENTS.length];
+
+function ProjectsSkeleton({ view }) {
+  const layout = view === "grid" ? "grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "flex flex-col gap-3";
+  return (
+    <div className={layout} aria-label="Loading projects" role="status">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="glass rounded-2xl p-6" style={{ opacity: 1 - i * 0.12 }}>
+          <Skeleton className="mb-5 h-12 w-12 rounded-2xl" />
+          <Skeleton className="mb-3 h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ onCreate }) {
+  return (
+    <div className="anim-fade-up py-20 text-center">
+      <div className="anim-float relative mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-500/30 to-violet-500/20 ring-1 ring-white/10">
+        <div className="pulse-ring absolute inset-0 rounded-3xl" />
+        <Sparkles size={34} className="text-brand-400" />
+      </div>
+      <h3 className="mb-3 text-2xl font-semibold text-white">Create your first project</h3>
+      <p className="mx-auto max-w-sm text-gray-400">Projects help you organize your documents and conversations.</p>
+      <button onClick={onCreate} className="btn-primary mt-7 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm">
+        <Plus size={16} /> Start a project
+      </button>
+    </div>
+  );
+}
 
 function ProjectsList({ projects, view, onDelete }) {
-  if (projects.length === 0) {
-    return (
-      <div className="text-center py-20">
-        <div className="w-20 h-20 bg-gray-800 rounded-2xl mx-auto mb-6 flex items-center justify-center">
-          <Plus size={32} className="text-gray-400" />
-        </div>
-        <h3 className="text-2xl font-medium text-white mb-3">Create your first project</h3>
-        <p className="text-gray-400">Projects help you organize your documents and conversations.</p>
-      </div>
-    );
-  }
-
-  const layout =
-    view === "grid"
-      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-      : "flex flex-col gap-2";
+  const grid = view === "grid";
+  const layout = grid ? "grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "flex flex-col gap-3";
 
   return (
-    <ul className={layout}>
-      {projects.map((project) => (
+    <ul className={`stagger ${layout}`}>
+      {projects.map((project, i) => (
         <li
           key={project._id}
-          className="group relative bg-gray-900/50 hover:bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl"
+          style={{ "--i": Math.min(i, 12) }}
+          onMouseMove={spotlightMove}
+          className="group glass card-lift spotlight relative rounded-2xl"
         >
-          <Link to={`/projects/${project._id}`} className="block p-6">
-            <div className="w-12 h-12 bg-gray-700 rounded-xl mb-4 flex items-center justify-center">
-              <Folder size={24} className="text-gray-400" />
+          <Link to={`/projects/${project._id}`} className={`flex ${grid ? "flex-col p-6" : "items-center gap-5 p-4 pr-14"}`}>
+            <div
+              className={`flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 ${accentFor(project.name)} ${
+                grid ? "mb-5 h-12 w-12" : "h-11 w-11"
+              }`}
+            >
+              <Folder size={22} className="text-white" />
             </div>
-            <h3 className="font-medium text-white text-base line-clamp-2">{project.name}</h3>
-            {project.description && (
-              <p className="text-gray-400 text-sm line-clamp-2 mt-2">{project.description}</p>
-            )}
-            {project.createdAt && (
-              <p className="text-gray-500 text-xs mt-3">
-                Created {new Date(project.createdAt).toLocaleDateString()}
-              </p>
-            )}
+            <div className="min-w-0 flex-1">
+              <h3 className="line-clamp-2 text-base font-semibold text-white">{project.name}</h3>
+              {project.description && <p className="mt-1.5 line-clamp-2 text-sm text-gray-400">{project.description}</p>}
+              {project.createdAt && (
+                <p className="mt-3 text-xs text-gray-500">Created {new Date(project.createdAt).toLocaleDateString()}</p>
+              )}
+            </div>
+            <ArrowUpRight
+              size={18}
+              className="absolute right-4 top-4 text-gray-500 opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand-400 group-hover:opacity-100"
+              style={grid ? undefined : { top: "1.1rem" }}
+            />
           </Link>
           <button
             onClick={() => onDelete(project)}
             aria-label={`Delete ${project.name}`}
-            className="absolute top-3 right-3 p-1.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 focus:opacity-100"
+            className="absolute bottom-3 right-3 rounded-lg p-1.5 text-gray-500 opacity-0 transition-all hover:bg-rose-500/15 hover:text-rose-300 focus:opacity-100 group-hover:opacity-100"
           >
             <Trash2 size={14} />
           </button>
@@ -67,6 +107,8 @@ export default function ProjectsPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   const { getToken } = useAuth();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -97,8 +139,9 @@ export default function ProjectsPage() {
       );
       setProjects((prev) => [res.data, ...prev]);
       setIsModalOpen(false);
+      toast.success(`Project "${name}" created.`);
     } catch (err) {
-      alert("Failed to create project.");
+      toast.error("Failed to create project.");
       console.error(err);
     } finally {
       setIsCreating(false);
@@ -106,15 +149,21 @@ export default function ProjectsPage() {
   };
 
   const handleDeleteProject = async (project) => {
-    if (!window.confirm(`Delete "${project.name}", its documents and all its conversations?`)) return;
+    const ok = await confirm({
+      title: `Delete "${project.name}"?`,
+      message: "Its documents, indexed content and all its conversations are removed. This cannot be undone.",
+      confirmText: "Delete project",
+    });
+    if (!ok) return;
     try {
       const token = await getToken();
       await apiClient.delete(`/projects/${project._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProjects((prev) => prev.filter((p) => p._id !== project._id));
+      toast.success("Project deleted.");
     } catch {
-      alert("Failed to delete the project.");
+      toast.error("Failed to delete the project.");
     }
   };
 
@@ -125,63 +174,60 @@ export default function ProjectsPage() {
       )
     : projects;
 
+  const toggle = (active) =>
+    `rounded-lg p-2 transition-all duration-200 ${
+      active ? "bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-md" : "text-gray-400 hover:text-white"
+    }`;
+
   return (
     <>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="p-8 lg:px-10">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-medium text-white">Projects</h1>
-            <p className="text-gray-400 text-sm mt-1">
+            <h1 className="text-gradient text-3xl font-extrabold tracking-tight">Projects</h1>
+            <p className="mt-1.5 text-sm text-gray-400">
               {projects.length} project{projects.length !== 1 ? "s" : ""}
             </p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-white hover:bg-gray-100 text-black px-4 py-2 rounded-full flex items-center gap-2 font-medium text-sm"
+            className="btn-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm"
           >
             <Plus size={16} />
             Create new
           </button>
         </div>
 
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+        <div className="mb-7 flex items-center gap-3">
+          <div className="group relative max-w-md flex-1">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 transition-colors group-focus-within:text-brand-400" />
             <input
               type="search"
               aria-label="Search projects"
               placeholder="Search projects"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="input-glow w-full rounded-xl py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-gray-500"
             />
           </div>
-          <div className="flex border border-gray-700 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setView("grid")}
-              aria-label="Grid view"
-              aria-pressed={view === "grid"}
-              className={`p-2 ${view === "grid" ? "bg-gray-700 text-white" : "text-gray-400"}`}
-            >
+          <div className="glass flex gap-1 rounded-xl p-1">
+            <button onClick={() => setView("grid")} aria-label="Grid view" aria-pressed={view === "grid"} className={toggle(view === "grid")}>
               <LayoutGrid size={16} />
             </button>
-            <button
-              onClick={() => setView("list")}
-              aria-label="List view"
-              aria-pressed={view === "list"}
-              className={`p-2 ${view === "list" ? "bg-gray-700 text-white" : "text-gray-400"}`}
-            >
+            <button onClick={() => setView("list")} aria-label="List view" aria-pressed={view === "list"} className={toggle(view === "list")}>
               <List size={16} />
             </button>
           </div>
         </div>
 
         {isLoading ? (
-          <p className="text-gray-400">Loading projects...</p>
+          <ProjectsSkeleton view={view} />
         ) : error ? (
-          <p className="text-red-400">{error}</p>
-        ) : visible.length === 0 && projects.length > 0 ? (
-          <p className="text-gray-400">No projects match your search.</p>
+          <p className="text-rose-300">{error}</p>
+        ) : projects.length === 0 ? (
+          <EmptyState onCreate={() => setIsModalOpen(true)} />
+        ) : visible.length === 0 ? (
+          <p className="anim-fade-in text-gray-400">No projects match your search.</p>
         ) : (
           <ProjectsList projects={visible} view={view} onDelete={handleDeleteProject} />
         )}

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, Outlet } from "react-router-dom";
-import { clerkMock, apiClientMock, authState } from "./helpers.jsx";
+import { render, confirmDialog, clerkMock, apiClientMock, authState } from "./helpers.jsx";
 import apiClient from "../utils/apiClient";
 import ProjectsPage from "../pages/ProjectsPage";
 import ProjectDetailPage from "../pages/ProjectDetailPage";
@@ -111,34 +111,47 @@ describe("projects page", () => {
     expect(screen.getByText("Project page")).toBeInTheDocument();
   });
 
-  it("P07 delete asks for confirmation, then removes the project from the list", async () => {
+  it("P07 delete opens a dialog, cancel keeps the project, confirm removes it and shows a notice", async () => {
     apiClient.get.mockResolvedValue({ data: projects });
     apiClient.delete.mockResolvedValue({ data: {} });
-    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const user = userEvent.setup();
     renderProjects();
     await screen.findByText("Travel");
 
     await user.click(screen.getByLabelText("Delete Travel"));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.click(confirmDialog().getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(apiClient.delete).not.toHaveBeenCalled();
     expect(screen.getByText("Travel")).toBeInTheDocument();
 
     await user.click(screen.getByLabelText("Delete Travel"));
-    expect(confirm).toHaveBeenCalledTimes(2);
+    await user.click(confirmDialog().getByRole("button", { name: "Delete project" }));
     expect(apiClient.delete).toHaveBeenCalledWith("/projects/p3", { headers: { Authorization: "Bearer test-token" } });
     await waitFor(() => expect(screen.queryByText("Travel")).not.toBeInTheDocument());
     expect(screen.getByText("2 projects")).toBeInTheDocument();
+    expect(await screen.findByText("Project deleted.")).toBeInTheDocument();
   });
 
-  it("P08 a failed delete keeps the project", async () => {
+  it("P07b the Escape key closes the delete dialog without deleting", async () => {
     apiClient.get.mockResolvedValue({ data: projects });
-    apiClient.delete.mockRejectedValue(new Error("500"));
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    vi.spyOn(window, "alert").mockImplementation(() => {});
     const user = userEvent.setup();
     renderProjects();
     await user.click(await screen.findByLabelText("Delete Travel"));
-    await waitFor(() => expect(window.alert).toHaveBeenCalledWith("Failed to delete the project."));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(apiClient.delete).not.toHaveBeenCalled();
+  });
+
+  it("P08 a failed delete keeps the project and shows an error notice", async () => {
+    apiClient.get.mockResolvedValue({ data: projects });
+    apiClient.delete.mockRejectedValue(new Error("500"));
+    const user = userEvent.setup();
+    renderProjects();
+    await user.click(await screen.findByLabelText("Delete Travel"));
+    await user.click(confirmDialog().getByRole("button", { name: "Delete project" }));
+    expect(await screen.findByText("Failed to delete the project.")).toBeInTheDocument();
     expect(screen.getByText("Travel")).toBeInTheDocument();
   });
 
@@ -205,15 +218,16 @@ describe("project detail page", () => {
   it("N04 deleting a conversation asks first and removes it", async () => {
     routeGets([{ _id: "c1", title: "Conversation 1" }, { _id: "c2", title: "Conversation 2" }]);
     apiClient.delete.mockResolvedValue({ data: {} });
-    vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
     const user = userEvent.setup();
     renderDetail();
     await screen.findByText("Conversation 1");
 
     await user.click(screen.getByLabelText("Delete Conversation 1"));
+    await user.click(confirmDialog().getByRole("button", { name: "Cancel" }));
     expect(apiClient.delete).not.toHaveBeenCalled();
 
     await user.click(screen.getByLabelText("Delete Conversation 1"));
+    await user.click(confirmDialog().getByRole("button", { name: "Delete conversation" }));
     expect(apiClient.delete).toHaveBeenCalledWith("/projects/p1/chats/c1", { headers: { Authorization: "Bearer test-token" } });
     await waitFor(() => expect(screen.queryByText("Conversation 1")).not.toBeInTheDocument());
     expect(screen.getByText("Conversation 2")).toBeInTheDocument();
@@ -237,14 +251,13 @@ describe("project detail page", () => {
     expect(await screen.findByText("Failed to load project data.")).toBeInTheDocument();
   });
 
-  it("N07 a failed chat creation alerts and adds nothing", async () => {
+  it("N07 a failed chat creation shows an error notice and adds nothing", async () => {
     routeGets([]);
     apiClient.post.mockRejectedValue(new Error("500"));
-    vi.spyOn(window, "alert").mockImplementation(() => {});
     const user = userEvent.setup();
     renderDetail();
     await user.click(await screen.findByText("New conversation"));
-    await waitFor(() => expect(window.alert).toHaveBeenCalledWith("Failed to create chat."));
+    expect(await screen.findByText("Failed to create chat.")).toBeInTheDocument();
     expect(screen.getByText("No conversations yet")).toBeInTheDocument();
   });
 });
