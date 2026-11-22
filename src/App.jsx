@@ -3,15 +3,13 @@ import { useAuth } from "@clerk/clerk-react";
 import HomePage from './pages/HomePage';
 import RootLayout from './Layouts/RootLayout';
 import ProjectsPage from './pages/ProjectsPage';
-import ProjectDetailPage from './pages/ProjectDetailPage'; 
+import ProjectDetailPage from './pages/ProjectDetailPage';
 
 function App() {
   const { userId, isLoaded } = useAuth();
 
-  // The most important part:
-  // While Clerk is checking the user's session, we render a loading screen.
-  // This prevents any other components (like HomePage with its SignInButton)
-  // from rendering prematurely.
+  // While Clerk checks the session, render a loading screen so that no page
+  // (such as the home page with its sign-in button) renders prematurely.
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
@@ -22,21 +20,17 @@ function App() {
 
   return (
     <Routes>
-      {/*
-        If the user is logged in, any attempt to visit the homepage '/'
-        will automatically redirect them to their '/projects' dashboard.
-      */}
-      <Route 
-        path="/" 
-        element={userId ? <Navigate to="/projects" /> : <HomePage />} 
+      {/* A signed-in user who opens '/' goes straight to their projects. */}
+      <Route
+        path="/"
+        element={userId ? <Navigate to="/projects" /> : <HomePage />}
       />
 
-      {/* All protected routes are nested inside the RootLayout.
-        The RootLayout itself will handle redirecting unauthenticated users.
-      */}
+      {/* Protected routes live inside RootLayout, which redirects signed-out users. */}
       <Route element={<RootLayout />}>
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+        <Route path="/projects/:projectId/chats/:chatId" element={<ProjectDetailPage />} />
       </Route>
     </Routes>
   );

@@ -1,14 +1,16 @@
 // src/pages/ProjectDetailPage.jsx
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import apiClient from "../utils/apiClient";
 import ConversationsList from "../components/projects/ConversationsList";
 import KnowledgeBaseSidebar from "../components/projects/KnowledgeBaseSidebar";
+import ChatInterface from "../components/chat/ChatInterface";
 
 export default function ProjectDetailPage() {
-  const { projectId } = useParams(); // Get projectId from the URL
+  const { projectId, chatId } = useParams();
   const { getToken } = useAuth();
+  const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
   const [chats, setChats] = useState([]);
@@ -23,10 +25,9 @@ export default function ProjectDetailPage() {
         const token = await getToken();
         const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-        // Fetch project details and chats in parallel
         const [projectRes, chatsRes] = await Promise.all([
-          apiClient.get(`/projects/${projectId}`, headers), // Note: We need to build this endpoint
-          apiClient.get(`/projects/${projectId}/chats`, headers)
+          apiClient.get(`/projects/${projectId}`, headers),
+          apiClient.get(`/projects/${projectId}/chats`, headers),
         ]);
 
         setProject(projectRes.data);
@@ -45,16 +46,32 @@ export default function ProjectDetailPage() {
     setIsCreatingChat(true);
     try {
       const token = await getToken();
-      const title = `Conversation #${Math.floor(Math.random() * 1000)}`; // Simple title for now
-      const res = await apiClient.post(`/projects/${projectId}/chats`, 
-        { title }, 
+      const title = `Conversation ${chats.length + 1}`;
+      const res = await apiClient.post(
+        `/projects/${projectId}/chats`,
+        { title },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setChats([res.data, ...chats]); // Add new chat to the list
-    } catch (err) {
+      setChats((prev) => [res.data, ...prev]);
+      navigate(`/projects/${projectId}/chats/${res.data._id}`);
+    } catch {
       alert("Failed to create chat.");
     } finally {
       setIsCreatingChat(false);
+    }
+  };
+
+  const handleDeleteChat = async (chat) => {
+    if (!window.confirm(`Delete "${chat.title}" and its messages?`)) return;
+    try {
+      const token = await getToken();
+      await apiClient.delete(`/projects/${projectId}/chats/${chat._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setChats((prev) => prev.filter((c) => c._id !== chat._id));
+      if (chatId === chat._id) navigate(`/projects/${projectId}`);
+    } catch {
+      alert("Failed to delete the conversation.");
     }
   };
 
@@ -64,12 +81,17 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="flex h-full gap-4 p-4">
-      <ConversationsList 
-        project={project} 
-        chats={chats}
-        onCreateNewChat={handleCreateNewChat}
-        isCreatingChat={isCreatingChat}
-      />
+      {chatId ? (
+        <ChatInterface key={chatId} />
+      ) : (
+        <ConversationsList
+          project={project}
+          chats={chats}
+          onCreateNewChat={handleCreateNewChat}
+          onDeleteChat={handleDeleteChat}
+          isCreatingChat={isCreatingChat}
+        />
+      )}
       <KnowledgeBaseSidebar />
     </div>
   );
