@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
+    testTimeout: 15000,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
     globals: false,

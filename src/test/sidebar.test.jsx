@@ -82,6 +82,7 @@ describe("document list and status", () => {
     await screen.findByTestId("dropzone");
     expect(dropzoneProps.endpoint).toBe("documentUploader");
     expect(dropzoneProps.input).toEqual({ projectId: "p1" });
+    expect(dropzoneProps.content.allowedContent).toBe("PDF, DOCX, TXT or CSV files");
     expect(await dropzoneProps.headers()).toEqual({ Authorization: "Bearer test-token" });
   });
 

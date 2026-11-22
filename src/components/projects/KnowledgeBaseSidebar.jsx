@@ -173,6 +173,7 @@ export default function KnowledgeBaseSidebar() {
               return token ? { Authorization: `Bearer ${token}` } : {};
             }}
             input={{ projectId }}
+            content={{ allowedContent: "PDF, DOCX, TXT or CSV files" }}
             appearance={{
               container:
                 "border-2 border-dashed border-gray-700 bg-gradient-to-b from-[#202020] to-[#181818] hover:from-[#232323] hover:to-[#1c1c1c] transition-all duration-300 p-6 rounded-lg flex flex-col items-center justify-center text-center cursor-pointer",
