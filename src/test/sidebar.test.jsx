@@ -234,6 +234,20 @@ describe("upload overlays", () => {
     expect(screen.queryByText("Uploading...")).not.toBeInTheDocument();
   });
 
+  it("D16 closing the sidebar during the upload overlay cancels its timers", async () => {
+    apiClient.get.mockResolvedValue({ data: [] });
+    const { unmount } = renderSidebar();
+    await screen.findByTestId("dropzone");
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await act(async () => { screen.getByText("sim-complete").click(); });
+    expect(screen.getByText("Processing file...")).toBeInTheDocument();
+    const callsBefore = apiClient.get.mock.calls.length;
+
+    unmount();
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+    expect(apiClient.get).toHaveBeenCalledTimes(callsBefore);
+  });
+
   it("D15 the document count matches the list", async () => {
     apiClient.get.mockResolvedValue({ data: [doc(), doc({ _id: "d2", name: "b.pdf" })] });
     renderSidebar();

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import {
@@ -69,14 +69,22 @@ export default function KnowledgeBaseSidebar() {
     return () => clearInterval(timer);
   }, [anyPending, fetchDocuments]);
 
+  // The upload overlay timers are kept so that they can be cleared when the sidebar closes.
+  const overlayTimers = useRef([]);
+  useEffect(() => {
+    const timers = overlayTimers.current;
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   const handleUploadComplete = () => {
     setUploadStatus("processing");
     setUploadProgress(100);
-    setTimeout(() => {
+    const first = setTimeout(() => {
       setUploadStatus("done");
       fetchDocuments();
-      setTimeout(() => setUploadStatus("idle"), 1500);
+      overlayTimers.current.push(setTimeout(() => setUploadStatus("idle"), 1500));
     }, 1000);
+    overlayTimers.current.push(first);
   };
 
   const handleUploadError = (err) => {
