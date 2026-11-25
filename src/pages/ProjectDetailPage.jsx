@@ -1,6 +1,7 @@
 // src/pages/ProjectDetailPage.jsx
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useMatch, useNavigate, useParams } from "react-router-dom";
+import ExamMap from "../components/projects/ExamMap";
 import { useAuth } from "@clerk/clerk-react";
 import apiClient from "../utils/apiClient";
 import ConversationsList from "../components/projects/ConversationsList";
@@ -12,6 +13,7 @@ import { useConfirm } from "../components/ui/confirm-context";
 
 export default function ProjectDetailPage() {
   const { projectId, chatId } = useParams();
+  const examMapOpen = Boolean(useMatch("/projects/:projectId/exam-map"));
   const { getToken } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -117,6 +119,8 @@ export default function ProjectDetailPage() {
     <div className="flex h-full gap-4 p-4">
       {chatId ? (
         <ChatInterface key={chatId} onFirstQuestion={handleFirstQuestion} />
+      ) : examMapOpen ? (
+        <ExamMap />
       ) : (
         <ConversationsList
           project={project}

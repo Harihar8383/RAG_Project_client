@@ -1,6 +1,6 @@
 // src/components/projects/ConversationsList.jsx
 import { Link } from "react-router-dom";
-import { MessageSquare, Plus, Trash2, ArrowRight, Loader2, Folder } from "lucide-react";
+import { MessageSquare, Plus, Trash2, ArrowRight, Loader2, Folder, Map as MapIcon } from "lucide-react";
 import { timeAgo } from "../../utils/timeAgo";
 import { spotlightMove } from "../ui/spotlight";
 
@@ -19,21 +19,26 @@ export default function ConversationsList({ project, chats, onCreateNewChat, onD
                 {project.description && <p className="mt-1.5 max-w-xl text-gray-400">{project.description}</p>}
               </div>
             </div>
-            <button
-              onClick={onCreateNewChat}
-              disabled={isCreatingChat}
-              className="btn-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm"
-            >
-              {isCreatingChat ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Creating...
-                </>
-              ) : (
-                <>
-                  <Plus size={16} /> New conversation
-                </>
-              )}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <Link to={`/projects/${project._id}/exam-map`} className="btn-ghost flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm text-gray-200">
+                <MapIcon size={16} /> Exam Map
+              </Link>
+              <button
+                onClick={onCreateNewChat}
+                disabled={isCreatingChat}
+                className="btn-primary flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm"
+              >
+                {isCreatingChat ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus size={16} /> New conversation
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="mb-4 flex items-center gap-3">

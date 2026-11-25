@@ -12,7 +12,9 @@ import {
   Clock,
   AlertCircle,
   Database,
+  GraduationCap,
 } from "lucide-react";
+import QuizModal from "./QuizModal";
 import { UploadDropzone } from "../../utils/uploadthing";
 import apiClient from "../../utils/apiClient";
 import Skeleton from "../ui/Skeleton";
@@ -50,6 +52,8 @@ export default function KnowledgeBaseSidebar() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
   const [loadError, setLoadError] = useState(false);
+  const [quizDoc, setQuizDoc] = useState(null);
+  const closeQuiz = useCallback(() => setQuizDoc(null), []);
   const [freshIds, setFreshIds] = useState([]);
 
   // The last status seen for each document, so a change from pending to ready can raise a notice.
@@ -330,6 +334,16 @@ export default function KnowledgeBaseSidebar() {
                           <p className="mt-1 text-xs text-rose-300">{doc.failureReason}</p>
                         )}
                       </div>
+                      {doc.status === "indexed" && (
+                        <button
+                          onClick={() => setQuizDoc(doc)}
+                          aria-label={`Quiz on ${doc.name}`}
+                          title="5-question quiz (uses 1 AI request the first time)"
+                          className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-brand-500/15 hover:text-brand-400"
+                        >
+                          <GraduationCap size={14} />
+                        </button>
+                      )}
                       {doc.status === "failed" && (
                         <button
                           onClick={() => handleRetry(doc)}
@@ -355,6 +369,7 @@ export default function KnowledgeBaseSidebar() {
           )}
         </div>
       </div>
+      {quizDoc && <QuizModal projectId={projectId} document={quizDoc} onClose={closeQuiz} />}
     </div>
   );
 }
