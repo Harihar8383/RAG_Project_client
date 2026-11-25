@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   Verix design tokens and motion.
+   Second Brain design tokens and motion.
    Every animation is plain CSS, so it never delays a render or a test,
    and the reduced-motion block at the end switches all of it off.
 ------------------------------------------------------------------- */

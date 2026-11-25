@@ -263,13 +263,13 @@ describe("project detail page", () => {
 });
 
 describe("home page and routing", () => {
-  it("R01 the landing page uses the Verix name and the product heading", () => {
+  it("R01 the landing page uses the Second Brain name and the product heading", () => {
     render(
       <MemoryRouter>
         <HomePage />
       </MemoryRouter>
     );
-    expect(screen.getByText("Verix")).toBeInTheDocument();
+    expect(screen.getByText("Second Brain")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Chat with your documents" })).toBeInTheDocument();
     expect(screen.queryByText(/OpenSlate/)).not.toBeInTheDocument();
     expect(screen.getByText("Sign In")).toBeInTheDocument();

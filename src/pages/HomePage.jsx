@@ -27,7 +27,7 @@ const FEATURES = [
 
 const STEPS = [
   { icon: UploadCloud, title: "Upload", text: "Drop your files into a project. A progress bar follows each upload." },
-  { icon: Cpu, title: "Index", text: "Verix reads each file and stores its passages so they can be searched by meaning." },
+  { icon: Cpu, title: "Index", text: "Second Brain reads each file and stores its passages so they can be searched by meaning." },
   { icon: MessageSquareText, title: "Ask", text: "Ask in plain language. The answer streams in with the sources it used." },
 ];
 
@@ -162,7 +162,7 @@ export default function HomePage() {
         <section className="mx-auto max-w-6xl px-6 py-24">
           <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Built for answers you can check</h2>
           <p className="mx-auto mt-3 max-w-xl text-center text-gray-400">
-            Verix finds the passages that match your question and writes the answer from those passages only.
+            Second Brain finds the passages that match your question and writes the answer from those passages only.
           </p>
           <div className="stagger mt-12 grid gap-5 md:grid-cols-3">
             {FEATURES.map((f, i) => (
@@ -214,7 +214,7 @@ export default function HomePage() {
       </main>
 
       <footer className="relative z-10 border-t border-white/[0.06] py-8 text-center text-xs text-gray-500">
-        Second Brain, a personal knowledge system built with retrieval-augmented generation.
+        Verix, a personal knowledge system built with retrieval-augmented generation.
       </footer>
     </div>
   );
