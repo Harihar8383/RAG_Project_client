@@ -44,7 +44,7 @@ export default function QuizModal({ projectId, document: file, onClose }) {
   const score = questions.filter((q, i) => picked[i] === q.answer).length;
   const percentRead = quiz ? Math.round((quiz.readChars / quiz.totalChars) * 100) : 100;
 
-  // A portal, because the glass panels around the sidebar would otherwise trap a fixed popup inside them.
+  // A portal, because the clay panels around the sidebar would otherwise trap a fixed popup inside them.
   return createPortal(
     <div className="anim-fade-in fixed inset-0 z-[55] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -52,7 +52,7 @@ export default function QuizModal({ projectId, document: file, onClose }) {
         aria-modal="true"
         aria-labelledby="quiz-title"
         onClick={(e) => e.stopPropagation()}
-        className="glass flex max-h-full w-full max-w-xl flex-col overflow-hidden rounded-2xl"
+        className="clay flex max-h-full w-full max-w-xl flex-col overflow-hidden rounded-2xl"
       >
         <div className="flex items-center justify-between gap-3 border-b border-white/[0.07] p-5">
           <h2 id="quiz-title" className="truncate text-base font-semibold text-white">Quiz: {file.name}</h2>

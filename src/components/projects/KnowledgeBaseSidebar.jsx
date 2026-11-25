@@ -176,9 +176,9 @@ export default function KnowledgeBaseSidebar() {
   const percentReady = documents.length ? Math.round((ready / documents.length) * 100) : 0;
 
   return (
-    <div className="glass flex h-full w-full max-w-96 shrink-0 flex-col overflow-y-auto rounded-2xl lg:w-96">
+    <div className="clay flex h-full w-full max-w-96 shrink-0 flex-col overflow-y-auto rounded-2xl lg:w-96">
       <div className="flex items-center gap-3 border-b border-white/[0.07] p-5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/30 to-violet-500/20 text-brand-400">
+        <span className="icon-tile flex h-9 w-9 items-center justify-center rounded-xl">
           <Database size={17} />
         </span>
         <h2 className="text-base font-semibold text-gray-100">Knowledge Base</h2>
@@ -241,12 +241,12 @@ export default function KnowledgeBaseSidebar() {
               // UploadThing adds its own default classes. The trailing ! makes these classes win over them.
               container: ({ isDragActive }) =>
                 isDragActive
-                  ? "flex! cursor-pointer! flex-col! items-center! justify-center! rounded-xl! border-2! border-dashed! border-brand-400! bg-brand-500/15! p-6! text-center! scale-[1.02] shadow-[0_0_40px_-6px_rgba(91,124,250,0.6)]! transition-all! duration-300!"
+                  ? "flex! cursor-pointer! flex-col! items-center! justify-center! rounded-xl! border-2! border-dashed! border-brand-400! bg-brand-500/15! p-6! text-center! scale-[1.02] transition-all! duration-300!"
                   : "flex! cursor-pointer! flex-col! items-center! justify-center! rounded-xl! border-2! border-dashed! border-white/15! bg-white/[0.03]! p-6! text-center! transition-all! duration-300! hover:border-brand-400/60! hover:bg-white/[0.06]!",
               label: "mt-2! text-sm! font-medium! text-gray-200!",
               allowedContent: "mt-1! text-xs! text-gray-400!",
               uploadIcon: "mb-2! h-14! w-14! text-brand-400!",
-              button: "btn-primary mt-3! rounded-xl! px-5! py-2.5! text-sm! text-white! disabled:opacity-100! after:hidden!",
+              button: "btn-primary mt-3! rounded-xl! px-5! py-2.5! text-sm! text-[var(--on-accent)]! disabled:opacity-100!",
             }}
           />
         </div>
@@ -271,7 +271,7 @@ export default function KnowledgeBaseSidebar() {
             </div>
             <div className="progress-track">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-700"
+                className="h-full rounded-full bg-emerald-400 transition-all duration-700"
                 style={{ width: `${percentReady}%` }}
               />
             </div>
@@ -296,7 +296,7 @@ export default function KnowledgeBaseSidebar() {
             </p>
           ) : documents.length === 0 ? (
             <div className="anim-fade-up py-10 text-center">
-              <div className="anim-float mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05] ring-1 ring-white/10">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05] ring-1 ring-white/10">
                 <FileText size={22} className="text-gray-400" />
               </div>
               <p className="text-sm text-gray-400">No documents uploaded yet.</p>

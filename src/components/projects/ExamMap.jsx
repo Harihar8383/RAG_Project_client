@@ -80,7 +80,7 @@ export default function ExamMap() {
   const open = revisionList(items);
 
   return (
-    <div className="glass flex flex-1 flex-col overflow-hidden rounded-2xl">
+    <div className="clay flex flex-1 flex-col overflow-hidden rounded-2xl">
       <div className="flex items-center gap-3 border-b border-white/[0.07] px-5 py-3.5">
         <Link to={`/projects/${projectId}`} aria-label="Back to conversations" className="rounded-lg p-1.5 text-gray-400 hover:bg-white/10 hover:text-white">
           <ArrowLeft size={18} />

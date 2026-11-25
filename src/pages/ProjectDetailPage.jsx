@@ -98,14 +98,14 @@ export default function ProjectDetailPage() {
   if (isLoading) {
     return (
       <div className="flex h-full gap-4 p-4" role="status" aria-label="Loading project">
-        <div className="glass flex-1 rounded-2xl p-8">
+        <div className="clay flex-1 rounded-2xl p-8">
           <Skeleton className="mb-3 h-8 w-1/3" />
           <Skeleton className="mb-10 h-4 w-1/2" />
           <Skeleton className="mb-3 h-16 w-full" />
           <Skeleton className="mb-3 h-16 w-full" />
           <Skeleton className="h-16 w-full" />
         </div>
-        <div className="glass hidden w-96 rounded-2xl p-6 lg:block">
+        <div className="clay hidden w-96 rounded-2xl p-6 lg:block">
           <Skeleton className="mb-6 h-6 w-1/2" />
           <Skeleton className="h-44 w-full" />
         </div>

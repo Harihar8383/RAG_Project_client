@@ -9,11 +9,11 @@ import {
   Copy,
   FileText,
   Loader2,
+  MessageSquareText,
+  PenLine,
   Search,
-  Sparkles,
   Square,
   User,
-  Wand2,
 } from "lucide-react";
 import apiClient from "../../utils/apiClient";
 import { readEventStream } from "../../utils/sse";
@@ -72,7 +72,7 @@ function SourceList({ sources }) {
         ))}
       </ul>
       {open && (
-        <div role="dialog" aria-label={`Source ${open.label}`} className="anim-scale-in glass absolute left-0 top-full z-20 mt-2 w-80 max-w-[80vw] rounded-xl p-4 text-left">
+        <div role="dialog" aria-label={`Source ${open.label}`} className="anim-scale-in clay absolute left-0 top-full z-20 mt-2 w-80 max-w-[80vw] rounded-xl p-4 text-left">
           <div className="mb-3 flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/20 text-brand-400">
               <FileText size={18} />
@@ -101,7 +101,7 @@ function SourceList({ sources }) {
 function Pipeline({ status }) {
   const steps = [
     { key: "retrieving", label: "Searching your documents", icon: Search },
-    { key: "generating", label: "Writing the answer", icon: Wand2 },
+    { key: "generating", label: "Writing the answer", icon: PenLine },
   ];
   const activeIndex = status === "generating" ? 1 : 0;
   return (
@@ -302,7 +302,7 @@ export default function ChatInterface({ onFirstQuestion }) {
   const nearLimit = input.length > MESSAGE_LIMIT * 0.85;
 
   return (
-    <div className="glass relative flex flex-1 flex-col overflow-hidden rounded-2xl">
+    <div className="clay relative flex flex-1 flex-col overflow-hidden rounded-2xl">
       <div className="relative flex items-center gap-3 border-b border-white/[0.07] px-5 py-3.5">
         <Link
           to={`/projects/${projectId}`}
@@ -311,9 +311,7 @@ export default function ChatInterface({ onFirstQuestion }) {
         >
           <ArrowLeft size={18} />
         </Link>
-        <span className={`flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.06] ${busy ? "pulse-ring" : ""}`}>
-          <Logo showText={false} size={20} />
-        </span>
+        <Logo showText={false} size={30} />
         <h2 className="text-sm font-semibold text-gray-100">Conversation</h2>
         {busy && (
           <span className="anim-fade-in ml-auto flex items-center gap-2 rounded-full bg-brand-500/15 px-3 py-1 text-xs text-brand-400">
@@ -333,9 +331,8 @@ export default function ChatInterface({ onFirstQuestion }) {
           </div>
         ) : messages.length === 0 ? (
           <div className="anim-fade-up flex h-full flex-col items-center justify-center text-center">
-            <div className="anim-float relative mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-500/30 to-violet-500/20 ring-1 ring-white/10">
-              <div className="pulse-ring absolute inset-0 rounded-3xl" />
-              <Sparkles size={32} className="text-brand-400" />
+            <div className="clay mb-6 flex h-20 w-20 items-center justify-center rounded-3xl">
+              <MessageSquareText size={30} className="text-brand-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-100">Start the conversation</h3>
             <p className="mt-2 max-w-sm text-sm text-gray-400">Ask a question about the documents in your knowledge base to get started.</p>
@@ -360,16 +357,14 @@ export default function ChatInterface({ onFirstQuestion }) {
             return (
               <div key={i} className={`group/msg anim-fade-up flex gap-3 ${mine ? "justify-end" : "justify-start"}`}>
                 {!mine && (
-                  <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] ring-1 ring-white/10">
-                    <Logo showText={false} size={18} />
-                  </span>
+                  <Logo showText={false} size={32} className="mt-1 shrink-0 self-start" />
                 )}
                 <div className={`flex max-w-[82%] items-start gap-1 ${mine ? "flex-row-reverse" : ""}`}>
                   <div
-                    className={`rounded-2xl px-4 py-3 text-sm shadow-lg ${
+                    className={`rounded-2xl px-4 py-3 text-sm ${
                       mine
-                        ? "rounded-br-md bg-gradient-to-br from-brand-500 to-violet-500 text-white"
-                        : "rounded-tl-md border border-white/[0.07] bg-white/[0.05] text-gray-200"
+                        ? "rounded-br-md fill-accent"
+                        : "clay rounded-tl-md text-gray-200"
                     }`}
                   >
                     {!mine && !m.content && live ? (
@@ -405,7 +400,7 @@ export default function ChatInterface({ onFirstQuestion }) {
       )}
 
       <div className="border-t border-white/[0.07] p-4">
-        <div className="input-glow flex items-end gap-2 rounded-2xl p-2 focus-within:border-brand-400/70 focus-within:shadow-[0_0_0_4px_rgba(91,124,250,0.18)]">
+        <div className="input-glow flex items-end gap-2 rounded-2xl p-2 focus-within:border-brand-400/70 focus-within:ring-4 focus-within:ring-brand-500/15">
           <textarea
             ref={inputRef}
             aria-label="Message"
@@ -421,7 +416,7 @@ export default function ChatInterface({ onFirstQuestion }) {
             <button
               onClick={stop}
               aria-label="Stop"
-              className="pulse-ring rounded-xl bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+              className="rounded-xl bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
             >
               <Square size={16} />
             </button>

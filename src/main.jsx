@@ -6,6 +6,9 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import { BrowserRouter } from 'react-router-dom';
 import ToastProvider from './components/ui/ToastProvider.jsx';
 import ConfirmProvider from './components/ui/ConfirmProvider.jsx';
+import { savedTheme } from './components/ui/theme.js';
+
+document.documentElement.dataset.theme = savedTheme();
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -27,7 +30,7 @@ const CLERK_TEXTS = {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} localization={CLERK_TEXTS}>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} localization={CLERK_TEXTS} appearance={{ variables: { colorPrimary: '#2b2a27', borderRadius: '0.9rem' } }}>
       <ToastProvider>
         <ConfirmProvider>
           <App />

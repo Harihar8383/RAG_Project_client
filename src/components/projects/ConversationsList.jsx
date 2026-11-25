@@ -2,20 +2,19 @@
 import { Link } from "react-router-dom";
 import { MessageSquare, Plus, Trash2, ArrowRight, Loader2, Folder, Map as MapIcon } from "lucide-react";
 import { timeAgo } from "../../utils/timeAgo";
-import { spotlightMove } from "../ui/spotlight";
 
 export default function ConversationsList({ project, chats, onCreateNewChat, onDeleteChat, isCreatingChat }) {
   return (
-    <div className="glass flex flex-1 flex-col overflow-hidden rounded-2xl">
+    <div className="clay flex flex-1 flex-col overflow-hidden rounded-2xl">
       <div className="flex-1 overflow-y-auto p-7">
         <div className="mx-auto max-w-4xl">
           <div className="mb-9 flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 shadow-lg">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl icon-tile">
                 <Folder size={26} className="text-white" />
               </div>
               <div>
-                <h1 className="text-gradient text-3xl font-extrabold tracking-tight">{project.name}</h1>
+                <h1 className="heading-gradient pb-1 text-3xl font-extrabold tracking-tight">{project.name}</h1>
                 {project.description && <p className="mt-1.5 max-w-xl text-gray-400">{project.description}</p>}
               </div>
             </div>
@@ -48,7 +47,7 @@ export default function ConversationsList({ project, chats, onCreateNewChat, onD
 
           {chats.length === 0 ? (
             <div className="anim-fade-up py-16 text-center">
-              <div className="anim-float mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.05] ring-1 ring-white/10">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.05] ring-1 ring-white/10">
                 <MessageSquare size={26} className="text-brand-400" />
               </div>
               <h3 className="text-lg font-semibold text-gray-100">No conversations yet</h3>
@@ -60,11 +59,10 @@ export default function ConversationsList({ project, chats, onCreateNewChat, onD
                 <li
                   key={chat._id}
                   style={{ "--i": Math.min(i, 12) }}
-                  onMouseMove={spotlightMove}
-                  className="group spotlight card-lift flex items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.03]"
+                  className="group card-lift flex items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.03]"
                 >
                   <Link to={`/projects/${project._id}/chats/${chat._id}`} className="flex flex-1 items-center gap-4 p-4">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/30 to-violet-500/20 text-brand-400 transition-transform duration-300 group-hover:scale-110">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl icon-tile">
                       <MessageSquare size={17} />
                     </span>
                     <span className="min-w-0 flex-1">
