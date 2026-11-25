@@ -297,3 +297,34 @@ describe("readEventStream", () => {
     expect(events).toEqual([{ a: 1 }]);
   });
 });
+
+describe("audit fixes", () => {
+  it("A01 a rejected question goes back into the message box and leaves the list", async () => {
+    const user = userEvent.setup();
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 429, json: async () => ({ error: "You reached today's question limit." }) })));
+    renderChat();
+    await screen.findByText("Start the conversation");
+    await user.type(screen.getByLabelText("Message"), "Keep this text");
+    await user.click(screen.getByLabelText("Send"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("question limit");
+    expect(screen.getByLabelText("Message")).toHaveValue("Keep this text");
+    expect(screen.getByText("Start the conversation")).toBeInTheDocument();
+    expect(screen.getByLabelText("Message")).toHaveAttribute("maxLength", "4000");
+  });
+
+  it("A02 a grouped citation shows one badge per source", () => {
+    render(<FormattedText text="Both agree [S1, S3]." />);
+    expect(screen.getByTitle("Source S1")).toBeInTheDocument();
+    expect(screen.getByTitle("Source S3")).toBeInTheDocument();
+  });
+
+  it("A03 opening a source shows the cited passage", async () => {
+    const user = userEvent.setup();
+    apiClient.get.mockResolvedValue({
+      data: [{ role: "assistant", content: "A [S1].", sources: [{ label: "S1", fileName: "p.pdf", page: 2, text: "The cited passage." }] }],
+    });
+    renderChat();
+    await user.click(await screen.findByRole("button", { name: /p\.pdf/ }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("The cited passage.");
+  });
+});

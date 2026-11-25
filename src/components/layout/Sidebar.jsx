@@ -5,7 +5,8 @@ import { Link, useLocation } from "react-router-dom";
 import Logo from "../ui/Logo";
 
 export default function Sidebar({ onNewProjectClick }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Starts collapsed on phones, so the page keeps room for its content.
+  const [isCollapsed, setIsCollapsed] = useState(() => window.matchMedia?.("(max-width: 767px)").matches === true);
   const location = useLocation();
   const onProjects = location.pathname.startsWith("/projects");
 

@@ -13,8 +13,8 @@ const FEATURES = [
   },
   {
     icon: ShieldCheck,
-    title: "Your files stay yours",
-    text: "Each question searches only your own project. The server sets that limit, not the browser.",
+    title: "Projects stay separate",
+    text: "Each question searches only your own project. The server sets that limit, not the browser. Answers are written by Google Gemini, so keep sensitive files out.",
     tone: "from-emerald-500/25 to-emerald-500/0 text-emerald-300",
   },
   {

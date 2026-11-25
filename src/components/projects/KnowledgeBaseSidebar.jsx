@@ -49,6 +49,7 @@ export default function KnowledgeBaseSidebar() {
   const [uploadStatus, setUploadStatus] = useState("idle"); // idle | uploading | processing | done
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
+  const [loadError, setLoadError] = useState(false);
   const [freshIds, setFreshIds] = useState([]);
 
   // The last status seen for each document, so a change from pending to ready can raise a notice.
@@ -82,8 +83,10 @@ export default function KnowledgeBaseSidebar() {
       }
       seen.current = new Map(list.map((d) => [d._id, d.status]));
       setDocuments(list);
+      setLoadError(false);
     } catch (err) {
       console.error("Failed to fetch documents:", err);
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
@@ -169,7 +172,7 @@ export default function KnowledgeBaseSidebar() {
   const percentReady = documents.length ? Math.round((ready / documents.length) * 100) : 0;
 
   return (
-    <div className="glass flex h-full w-96 shrink-0 flex-col rounded-2xl">
+    <div className="glass flex h-full w-full max-w-96 shrink-0 flex-col overflow-y-auto rounded-2xl lg:w-96">
       <div className="flex items-center gap-3 border-b border-white/[0.07] p-5">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/30 to-violet-500/20 text-brand-400">
           <Database size={17} />
@@ -243,6 +246,9 @@ export default function KnowledgeBaseSidebar() {
             }}
           />
         </div>
+        <p className="mt-2 text-[11px] leading-snug text-amber-200/80">
+          Files are read by Google Gemini to answer questions. Do not upload sensitive or personal files.
+        </p>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col border-t border-white/[0.07] p-5">
@@ -280,6 +286,10 @@ export default function KnowledgeBaseSidebar() {
               <Skeleton className="h-14 w-full" />
               <Skeleton className="h-14 w-full" />
             </div>
+          ) : loadError && documents.length === 0 ? (
+            <p role="alert" className="py-10 text-center text-sm text-rose-300">
+              Could not load your documents. Reload the page to try again.
+            </p>
           ) : documents.length === 0 ? (
             <div className="anim-fade-up py-10 text-center">
               <div className="anim-float mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05] ring-1 ring-white/10">

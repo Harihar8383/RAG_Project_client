@@ -22,6 +22,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [showFiles, setShowFiles] = useState(false); // small screens only: the knowledge base opens over the chat
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,6 +67,12 @@ export default function ProjectDetailPage() {
     }
   };
 
+  // Mirrors the server, which names a new chat after its first question.
+  const handleFirstQuestion = (question) =>
+    setChats((prev) =>
+      prev.map((c) => (c._id === chatId && /^Conversation \d+$/.test(c.title) ? { ...c, title: question.slice(0, 60) } : c))
+    );
+
   const handleDeleteChat = async (chat) => {
     const ok = await confirm({
       title: `Delete "${chat.title}"?`,
@@ -109,7 +116,7 @@ export default function ProjectDetailPage() {
   return (
     <div className="flex h-full gap-4 p-4">
       {chatId ? (
-        <ChatInterface key={chatId} />
+        <ChatInterface key={chatId} onFirstQuestion={handleFirstQuestion} />
       ) : (
         <ConversationsList
           project={project}
@@ -119,7 +126,20 @@ export default function ProjectDetailPage() {
           isCreatingChat={isCreatingChat}
         />
       )}
-      <KnowledgeBaseSidebar />
+      <div
+        className={`${showFiles ? "fixed inset-0 z-40 flex justify-end bg-black/60 p-4" : "hidden"} lg:static lg:z-auto lg:flex lg:shrink-0 lg:bg-transparent lg:p-0`}
+        onClick={(e) => e.target === e.currentTarget && setShowFiles(false)}
+      >
+        <KnowledgeBaseSidebar />
+      </div>
+      <button
+        onClick={() => setShowFiles((open) => !open)}
+        aria-expanded={showFiles}
+        aria-label={showFiles ? "Close the knowledge base" : "Open the knowledge base"}
+        className="btn-primary fixed bottom-32 right-5 z-50 rounded-xl px-4 py-2.5 text-sm lg:hidden" // above the chat's Send button
+      >
+        {showFiles ? "Close" : "Files"}
+      </button>
     </div>
   );
 }

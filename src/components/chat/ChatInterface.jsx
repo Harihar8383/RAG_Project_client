@@ -8,8 +8,6 @@ import {
   CheckCircle2,
   Copy,
   FileText,
-  Lightbulb,
-  ListChecks,
   Loader2,
   Search,
   Sparkles,
@@ -27,11 +25,8 @@ import { useToast } from "../ui/toast-context";
 const INTERRUPTED = "This answer was interrupted.";
 const MESSAGE_LIMIT = 4000;
 
-const SUGGESTIONS = [
-  { icon: ListChecks, text: "Summarize my documents" },
-  { icon: Lightbulb, text: "What are the key points?" },
-  { icon: Search, text: "List any dates, names or numbers that matter" },
-];
+// Each answer reads only the 5 best-matching passages, so whole-document requests such as "summarize" are not offered.
+const SUGGESTIONS = [{ icon: Search, text: "List any dates, names or numbers that matter" }];
 
 function SourceList({ sources }) {
   const [openLabel, setOpenLabel] = useState(null);
@@ -76,7 +71,7 @@ function SourceList({ sources }) {
         ))}
       </ul>
       {open && (
-        <div role="dialog" aria-label={`Source ${open.label}`} className="anim-scale-in glass absolute left-0 top-full z-20 mt-2 w-72 rounded-xl p-4 text-left">
+        <div role="dialog" aria-label={`Source ${open.label}`} className="anim-scale-in glass absolute left-0 top-full z-20 mt-2 w-80 max-w-[80vw] rounded-xl p-4 text-left">
           <div className="mb-3 flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/20 text-brand-400">
               <FileText size={18} />
@@ -86,9 +81,15 @@ function SourceList({ sources }) {
               <p className="text-xs text-gray-400">{open.page != null ? `Page ${open.page}` : "Whole file"}</p>
             </div>
           </div>
-          <p className="text-xs leading-relaxed text-gray-400">
-            The answer marks this passage with the badge <b className="text-brand-400">{open.label}</b>. Manage the file in the Knowledge Base on the right.
-          </p>
+          {open.text ? (
+            <blockquote className="max-h-48 overflow-y-auto whitespace-pre-wrap border-l-2 border-brand-400/60 pl-3 text-xs leading-relaxed text-gray-300">
+              {open.text}
+            </blockquote>
+          ) : (
+            <p className="text-xs leading-relaxed text-gray-400">
+              The answer marks this passage with the badge <b className="text-brand-400">{open.label}</b>. Manage the file in the Knowledge Base on the right.
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -165,7 +166,7 @@ function CopyButton({ text }) {
   );
 }
 
-export default function ChatInterface() {
+export default function ChatInterface({ onFirstQuestion }) {
   const { projectId, chatId } = useParams();
   const { getToken } = useAuth();
 
@@ -231,6 +232,7 @@ export default function ChatInterface() {
 
     const controller = new AbortController();
     abortRef.current = controller;
+    let accepted = false; // true once the server has stored the question
     try {
       const token = await getToken();
       const res = await fetch(`${apiClient.defaults.baseURL}${base}`, {
@@ -243,6 +245,8 @@ export default function ChatInterface() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "The question could not be sent.");
       }
+      accepted = true;
+      if (messages.length === 0) onFirstQuestion?.(content);
       let finished = false;
       await readEventStream(res, (event) => {
         if (event.status) setStatus(event.status);
@@ -259,6 +263,11 @@ export default function ChatInterface() {
     } catch (err) {
       if (err.name === "AbortError") {
         updateLast({ incomplete: true });
+      } else if (!accepted) {
+        // The server did not store the question, so give the text back instead of losing it.
+        setMessages((prev) => prev.slice(0, -2));
+        setInput((typed) => typed || content);
+        setError(err.message || "The question could not be sent.");
       } else {
         setMessages((prev) => (prev.length && prev[prev.length - 1].role === "assistant" && !prev[prev.length - 1].content ? prev.slice(0, -1) : prev));
         setError(err.message || "The question could not be sent.");
@@ -267,7 +276,7 @@ export default function ChatInterface() {
       abortRef.current = null;
       setStatus("idle");
     }
-  }, [input, status, getToken, base]);
+  }, [input, status, getToken, base, messages.length, onFirstQuestion]);
 
   const stop = () => abortRef.current?.abort();
 
@@ -399,6 +408,7 @@ export default function ChatInterface() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
             rows={1}
+            maxLength={MESSAGE_LIMIT}
             placeholder="Ask me anything..."
             className="max-h-40 flex-1 resize-none bg-transparent px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none"
           />
