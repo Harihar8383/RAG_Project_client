@@ -24,6 +24,7 @@ import { useToast } from "../ui/toast-context";
 
 const INTERRUPTED = "This answer was interrupted.";
 const MESSAGE_LIMIT = 4000;
+const CONNECTION_LOST = "The connection to the server was lost before the answer finished. Please ask again.";
 
 // Each answer reads only the 5 best-matching passages, so whole-document requests such as "summarize" are not offered.
 const SUGGESTIONS = [{ icon: Search, text: "List any dates, names or numbers that matter" }];
@@ -259,7 +260,10 @@ export default function ChatInterface({ onFirstQuestion }) {
         }
         if (event.done) finished = true;
       });
-      if (!finished) updateLast({ incomplete: true });
+      if (!finished) {
+        updateLast({ incomplete: true });
+        setError(CONNECTION_LOST);
+      }
     } catch (err) {
       if (err.name === "AbortError") {
         updateLast({ incomplete: true });
@@ -267,10 +271,11 @@ export default function ChatInterface({ onFirstQuestion }) {
         // The server did not store the question, so give the text back instead of losing it.
         setMessages((prev) => prev.slice(0, -2));
         setInput((typed) => typed || content);
-        setError(err.message || "The question could not be sent.");
+        // fetch rejects with a TypeError ("Failed to fetch", "network error") when the server cannot be reached.
+        setError(err instanceof TypeError ? "Could not reach the server. Check your connection and try again." : err.message || "The question could not be sent.");
       } else {
         setMessages((prev) => (prev.length && prev[prev.length - 1].role === "assistant" && !prev[prev.length - 1].content ? prev.slice(0, -1) : prev));
-        setError(err.message || "The question could not be sent.");
+        setError(CONNECTION_LOST);
       }
     } finally {
       abortRef.current = null;

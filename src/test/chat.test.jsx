@@ -207,6 +207,7 @@ describe("chat streaming", () => {
     stream.end();
 
     expect(await screen.findByText("This answer was interrupted.")).toBeInTheDocument();
+    expect(screen.getByText(/connection to the server was lost/)).toBeInTheDocument();
   });
 
   it("C08 events split across network chunks are still parsed", async () => {
