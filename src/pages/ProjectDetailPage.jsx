@@ -1,6 +1,7 @@
 // src/pages/ProjectDetailPage.jsx
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useMatch, useNavigate, useParams } from "react-router-dom";
+import ExamMap from "../components/projects/ExamMap";
 import { useAuth } from "@clerk/clerk-react";
 import apiClient from "../utils/apiClient";
 import ConversationsList from "../components/projects/ConversationsList";
@@ -12,6 +13,7 @@ import { useConfirm } from "../components/ui/confirm-context";
 
 export default function ProjectDetailPage() {
   const { projectId, chatId } = useParams();
+  const examMapOpen = Boolean(useMatch("/projects/:projectId/exam-map"));
   const { getToken } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -22,6 +24,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [showFiles, setShowFiles] = useState(false); // small screens only: the knowledge base opens over the chat
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,6 +69,12 @@ export default function ProjectDetailPage() {
     }
   };
 
+  // Mirrors the server, which names a new chat after its first question.
+  const handleFirstQuestion = (question) =>
+    setChats((prev) =>
+      prev.map((c) => (c._id === chatId && /^Conversation \d+$/.test(c.title) ? { ...c, title: question.slice(0, 60) } : c))
+    );
+
   const handleDeleteChat = async (chat) => {
     const ok = await confirm({
       title: `Delete "${chat.title}"?`,
@@ -89,14 +98,14 @@ export default function ProjectDetailPage() {
   if (isLoading) {
     return (
       <div className="flex h-full gap-4 p-4" role="status" aria-label="Loading project">
-        <div className="glass flex-1 rounded-2xl p-8">
+        <div className="clay flex-1 rounded-2xl p-8">
           <Skeleton className="mb-3 h-8 w-1/3" />
           <Skeleton className="mb-10 h-4 w-1/2" />
           <Skeleton className="mb-3 h-16 w-full" />
           <Skeleton className="mb-3 h-16 w-full" />
           <Skeleton className="h-16 w-full" />
         </div>
-        <div className="glass hidden w-96 rounded-2xl p-6 lg:block">
+        <div className="clay hidden w-96 rounded-2xl p-6 lg:block">
           <Skeleton className="mb-6 h-6 w-1/2" />
           <Skeleton className="h-44 w-full" />
         </div>
@@ -109,7 +118,9 @@ export default function ProjectDetailPage() {
   return (
     <div className="flex h-full gap-4 p-4">
       {chatId ? (
-        <ChatInterface key={chatId} />
+        <ChatInterface key={chatId} onFirstQuestion={handleFirstQuestion} />
+      ) : examMapOpen ? (
+        <ExamMap />
       ) : (
         <ConversationsList
           project={project}
@@ -119,7 +130,20 @@ export default function ProjectDetailPage() {
           isCreatingChat={isCreatingChat}
         />
       )}
-      <KnowledgeBaseSidebar />
+      <div
+        className={`${showFiles ? "fixed inset-0 z-40 flex justify-end bg-black/60 p-4" : "hidden"} lg:static lg:z-auto lg:flex lg:shrink-0 lg:bg-transparent lg:p-0`}
+        onClick={(e) => e.target === e.currentTarget && setShowFiles(false)}
+      >
+        <KnowledgeBaseSidebar />
+      </div>
+      <button
+        onClick={() => setShowFiles((open) => !open)}
+        aria-expanded={showFiles}
+        aria-label={showFiles ? "Close the knowledge base" : "Open the knowledge base"}
+        className="btn-primary fixed bottom-32 right-5 z-50 rounded-xl px-4 py-2.5 text-sm lg:hidden" // above the chat's Send button
+      >
+        {showFiles ? "Close" : "Files"}
+      </button>
     </div>
   );
 }

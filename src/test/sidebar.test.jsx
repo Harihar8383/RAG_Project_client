@@ -86,11 +86,12 @@ describe("document list and status", () => {
     expect(await dropzoneProps.headers()).toEqual({ Authorization: "Bearer test-token" });
   });
 
-  it("D04 a failed list request leaves the empty state instead of crashing", async () => {
+  it("D04 a failed list request shows a load error, not the empty state", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     apiClient.get.mockRejectedValue(new Error("down"));
     renderSidebar();
-    expect(await screen.findByText("No documents uploaded yet.")).toBeInTheDocument();
+    expect(await screen.findByText(/Could not load your documents/)).toBeInTheDocument();
+    expect(screen.queryByText("No documents uploaded yet.")).not.toBeInTheDocument();
   });
 });
 

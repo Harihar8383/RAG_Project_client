@@ -61,7 +61,7 @@ export default function ToastProvider({ children }) {
               key={t.id}
               role="status"
               style={{ "--toast-ms": `${DURATION_MS}ms` }}
-              className="toast-enter glass relative flex items-start gap-3 overflow-hidden rounded-xl px-4 py-3 pr-10 text-sm text-gray-100"
+              className="toast-enter clay relative flex items-start gap-3 overflow-hidden rounded-xl px-4 py-3 pr-10 text-sm text-gray-100"
             >
               <Icon size={18} className={`mt-0.5 shrink-0 anim-pop ${s.ring}`} />
               <span>{t.message}</span>

@@ -12,7 +12,9 @@ import {
   Clock,
   AlertCircle,
   Database,
+  GraduationCap,
 } from "lucide-react";
+import QuizModal from "./QuizModal";
 import { UploadDropzone } from "../../utils/uploadthing";
 import apiClient from "../../utils/apiClient";
 import Skeleton from "../ui/Skeleton";
@@ -49,6 +51,9 @@ export default function KnowledgeBaseSidebar() {
   const [uploadStatus, setUploadStatus] = useState("idle"); // idle | uploading | processing | done
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const [quizDoc, setQuizDoc] = useState(null);
+  const closeQuiz = useCallback(() => setQuizDoc(null), []);
   const [freshIds, setFreshIds] = useState([]);
 
   // The last status seen for each document, so a change from pending to ready can raise a notice.
@@ -82,8 +87,10 @@ export default function KnowledgeBaseSidebar() {
       }
       seen.current = new Map(list.map((d) => [d._id, d.status]));
       setDocuments(list);
+      setLoadError(false);
     } catch (err) {
       console.error("Failed to fetch documents:", err);
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
@@ -169,9 +176,9 @@ export default function KnowledgeBaseSidebar() {
   const percentReady = documents.length ? Math.round((ready / documents.length) * 100) : 0;
 
   return (
-    <div className="glass flex h-full w-96 shrink-0 flex-col rounded-2xl">
+    <div className="clay flex h-full w-full max-w-96 shrink-0 flex-col overflow-y-auto rounded-2xl lg:w-96">
       <div className="flex items-center gap-3 border-b border-white/[0.07] p-5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/30 to-violet-500/20 text-brand-400">
+        <span className="icon-tile flex h-9 w-9 items-center justify-center rounded-xl">
           <Database size={17} />
         </span>
         <h2 className="text-base font-semibold text-gray-100">Knowledge Base</h2>
@@ -234,15 +241,18 @@ export default function KnowledgeBaseSidebar() {
               // UploadThing adds its own default classes. The trailing ! makes these classes win over them.
               container: ({ isDragActive }) =>
                 isDragActive
-                  ? "flex! cursor-pointer! flex-col! items-center! justify-center! rounded-xl! border-2! border-dashed! border-brand-400! bg-brand-500/15! p-6! text-center! scale-[1.02] shadow-[0_0_40px_-6px_rgba(91,124,250,0.6)]! transition-all! duration-300!"
+                  ? "flex! cursor-pointer! flex-col! items-center! justify-center! rounded-xl! border-2! border-dashed! border-brand-400! bg-brand-500/15! p-6! text-center! scale-[1.02] transition-all! duration-300!"
                   : "flex! cursor-pointer! flex-col! items-center! justify-center! rounded-xl! border-2! border-dashed! border-white/15! bg-white/[0.03]! p-6! text-center! transition-all! duration-300! hover:border-brand-400/60! hover:bg-white/[0.06]!",
               label: "mt-2! text-sm! font-medium! text-gray-200!",
               allowedContent: "mt-1! text-xs! text-gray-400!",
               uploadIcon: "mb-2! h-14! w-14! text-brand-400!",
-              button: "btn-primary mt-3! rounded-xl! px-5! py-2.5! text-sm! text-white! disabled:opacity-100! after:hidden!",
+              button: "btn-primary mt-3! rounded-xl! px-5! py-2.5! text-sm! text-[var(--on-accent)]! disabled:opacity-100!",
             }}
           />
         </div>
+        <p className="mt-2 text-[11px] leading-snug text-amber-200/80">
+          Files are read by Google Gemini to answer questions. Do not upload sensitive or personal files.
+        </p>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col border-t border-white/[0.07] p-5">
@@ -261,7 +271,7 @@ export default function KnowledgeBaseSidebar() {
             </div>
             <div className="progress-track">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-700"
+                className="h-full rounded-full bg-emerald-400 transition-all duration-700"
                 style={{ width: `${percentReady}%` }}
               />
             </div>
@@ -280,9 +290,13 @@ export default function KnowledgeBaseSidebar() {
               <Skeleton className="h-14 w-full" />
               <Skeleton className="h-14 w-full" />
             </div>
+          ) : loadError && documents.length === 0 ? (
+            <p role="alert" className="py-10 text-center text-sm text-rose-300">
+              Could not load your documents. Reload the page to try again.
+            </p>
           ) : documents.length === 0 ? (
             <div className="anim-fade-up py-10 text-center">
-              <div className="anim-float mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05] ring-1 ring-white/10">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.05] ring-1 ring-white/10">
                 <FileText size={22} className="text-gray-400" />
               </div>
               <p className="text-sm text-gray-400">No documents uploaded yet.</p>
@@ -320,6 +334,16 @@ export default function KnowledgeBaseSidebar() {
                           <p className="mt-1 text-xs text-rose-300">{doc.failureReason}</p>
                         )}
                       </div>
+                      {doc.status === "indexed" && (
+                        <button
+                          onClick={() => setQuizDoc(doc)}
+                          aria-label={`Quiz on ${doc.name}`}
+                          title="5-question quiz (uses 1 AI request the first time)"
+                          className="rounded-lg p-1.5 text-gray-400 transition-all hover:bg-brand-500/15 hover:text-brand-400"
+                        >
+                          <GraduationCap size={14} />
+                        </button>
+                      )}
                       {doc.status === "failed" && (
                         <button
                           onClick={() => handleRetry(doc)}
@@ -345,6 +369,7 @@ export default function KnowledgeBaseSidebar() {
           )}
         </div>
       </div>
+      {quizDoc && <QuizModal projectId={projectId} document={quizDoc} onClose={closeQuiz} />}
     </div>
   );
 }

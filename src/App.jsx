@@ -30,6 +30,7 @@ function App() {
       <Route element={<RootLayout />}>
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+        <Route path="/projects/:projectId/exam-map" element={<ProjectDetailPage />} />
         <Route path="/projects/:projectId/chats/:chatId" element={<ProjectDetailPage />} />
       </Route>
     </Routes>

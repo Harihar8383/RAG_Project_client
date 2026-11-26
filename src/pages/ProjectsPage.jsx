@@ -2,29 +2,18 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import apiClient from "../utils/apiClient";
 import CreateProjectModal from "../components/modals/CreateProjectModal";
-import { Plus, Folder, Search, LayoutGrid, List, Trash2, ArrowUpRight, Sparkles } from "lucide-react";
+import { Plus, Folder, FolderPlus, Search, LayoutGrid, List, Trash2, ArrowUpRight } from "lucide-react";
 import { Link, useOutletContext } from "react-router-dom";
 import Skeleton from "../components/ui/Skeleton";
 import { useToast } from "../components/ui/toast-context";
 import { useConfirm } from "../components/ui/confirm-context";
-import { spotlightMove } from "../components/ui/spotlight";
-
-// Each project gets one of these colours, chosen from its name so that it stays the same between visits.
-const ACCENTS = [
-  "from-brand-500 to-violet-500",
-  "from-cyan-500 to-brand-500",
-  "from-emerald-500 to-cyan-500",
-  "from-fuchsia-500 to-violet-500",
-  "from-amber-400 to-rose-500",
-];
-const accentFor = (name) => ACCENTS[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % ACCENTS.length];
 
 function ProjectsSkeleton({ view }) {
   const layout = view === "grid" ? "grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "flex flex-col gap-3";
   return (
     <div className={layout} aria-label="Loading projects" role="status">
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="glass rounded-2xl p-6" style={{ opacity: 1 - i * 0.12 }}>
+        <div key={i} className="clay rounded-2xl p-6" style={{ opacity: 1 - i * 0.12 }}>
           <Skeleton className="mb-5 h-12 w-12 rounded-2xl" />
           <Skeleton className="mb-3 h-4 w-3/4" />
           <Skeleton className="h-3 w-1/2" />
@@ -37,9 +26,8 @@ function ProjectsSkeleton({ view }) {
 function EmptyState({ onCreate }) {
   return (
     <div className="anim-fade-up py-20 text-center">
-      <div className="anim-float relative mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-500/30 to-violet-500/20 ring-1 ring-white/10">
-        <div className="pulse-ring absolute inset-0 rounded-3xl" />
-        <Sparkles size={34} className="text-brand-400" />
+      <div className="clay mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-3xl">
+        <FolderPlus size={34} className="text-brand-400" />
       </div>
       <h3 className="mb-3 text-2xl font-semibold text-white">Create your first project</h3>
       <p className="mx-auto max-w-sm text-gray-400">Projects help you organize your documents and conversations.</p>
@@ -60,16 +48,13 @@ function ProjectsList({ projects, view, onDelete }) {
         <li
           key={project._id}
           style={{ "--i": Math.min(i, 12) }}
-          onMouseMove={spotlightMove}
-          className="group glass card-lift spotlight relative rounded-2xl"
+          className="group clay card-lift relative rounded-2xl"
         >
           <Link to={`/projects/${project._id}`} className={`flex ${grid ? "flex-col p-6" : "items-center gap-5 p-4 pr-14"}`}>
             <div
-              className={`flex shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 ${accentFor(project.name)} ${
-                grid ? "mb-5 h-12 w-12" : "h-11 w-11"
-              }`}
+              className={`icon-tile flex shrink-0 items-center justify-center rounded-2xl ${grid ? "mb-5 h-12 w-12" : "h-11 w-11"}`}
             >
-              <Folder size={22} className="text-white" />
+              <Folder size={22} />
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="line-clamp-2 text-base font-semibold text-white">{project.name}</h3>
@@ -176,7 +161,7 @@ export default function ProjectsPage() {
 
   const toggle = (active) =>
     `rounded-lg p-2 transition-all duration-200 ${
-      active ? "bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-md" : "text-gray-400 hover:text-white"
+      active ? "fill-accent" : "text-gray-400 hover:text-white"
     }`;
 
   return (
@@ -184,7 +169,7 @@ export default function ProjectsPage() {
       <div className="p-8 lg:px-10">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-gradient text-3xl font-extrabold tracking-tight">Projects</h1>
+            <h1 className="heading-gradient pb-1 text-3xl font-extrabold tracking-tight">Projects</h1>
             <p className="mt-1.5 text-sm text-gray-400">
               {projects.length} project{projects.length !== 1 ? "s" : ""}
             </p>
@@ -210,7 +195,7 @@ export default function ProjectsPage() {
               className="input-glow w-full rounded-xl py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-gray-500"
             />
           </div>
-          <div className="glass flex gap-1 rounded-xl p-1">
+          <div className="clay flex gap-1 rounded-xl p-1">
             <button onClick={() => setView("grid")} aria-label="Grid view" aria-pressed={view === "grid"} className={toggle(view === "grid")}>
               <LayoutGrid size={16} />
             </button>

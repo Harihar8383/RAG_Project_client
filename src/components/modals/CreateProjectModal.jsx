@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, Sparkles, Loader2 } from "lucide-react";
+import { X, FolderPlus, Loader2 } from "lucide-react";
 
 const NAME_LIMIT = 60;
 const DESCRIPTION_LIMIT = 200;
@@ -39,15 +39,13 @@ function ProjectForm({ onClose, onCreateProject, isLoading }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-project-title"
-        className="anim-scale-in glass relative w-full max-w-md overflow-hidden rounded-3xl"
+        className="anim-scale-in clay relative w-full max-w-md overflow-hidden rounded-3xl"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
       >
-        <div className="pointer-events-none absolute -top-20 left-1/2 h-40 w-72 -translate-x-1/2 rounded-full bg-brand-500/25 blur-3xl" />
-
         <div className="relative flex items-center justify-between border-b border-white/[0.07] p-6">
           <div className="flex items-center gap-3.5">
-            <div className="pulse-ring flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-500 shadow-lg">
-              <Sparkles size={20} className="text-white" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl icon-tile">
+              <FolderPlus size={20} />
             </div>
             <div>
               <h2 id="create-project-title" className="text-lg font-semibold text-white">Create new project</h2>

@@ -46,9 +46,9 @@ export default function ConfirmProvider({ children }) {
             aria-modal="true"
             aria-labelledby="confirm-title"
             onClick={(e) => e.stopPropagation()}
-            className="anim-scale-in glass w-full max-w-sm rounded-2xl p-6"
+            className="anim-scale-in clay w-full max-w-sm rounded-2xl p-6"
           >
-            <div className="pulse-ring mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-300">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-300">
               <AlertTriangle size={22} />
             </div>
             <h2 id="confirm-title" className="text-lg font-semibold text-white">

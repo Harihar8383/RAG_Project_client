@@ -33,6 +33,7 @@ export const apiClientMock = () => ({
     get: vi.fn(),
     post: vi.fn(),
     delete: vi.fn(),
+    patch: vi.fn(),
     defaults: { baseURL: "http://api.test/api" },
   },
 });

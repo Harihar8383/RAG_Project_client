@@ -17,8 +17,7 @@ export default function RootLayout() {
   const pageKey = location.pathname.split("/").slice(0, 3).join("/");
 
   return (
-    <div className="relative flex h-screen bg-ink-950">
-      <div className="aurora" aria-hidden="true" />
+    <div className="relative flex h-screen">
       <Sidebar onNewProjectClick={() => setIsModalOpen(true)} />
       <main className="relative z-10 flex flex-1 flex-col overflow-y-auto">
         <div key={pageKey} className="anim-fade-up flex min-h-0 flex-1 flex-col">

@@ -3,15 +3,17 @@ import { Plus, Briefcase, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Logo from "../ui/Logo";
+import ThemeToggle from "../ui/ThemeToggle";
 
 export default function Sidebar({ onNewProjectClick }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Starts collapsed on phones, so the page keeps room for its content.
+  const [isCollapsed, setIsCollapsed] = useState(() => window.matchMedia?.("(max-width: 767px)").matches === true);
   const location = useLocation();
   const onProjects = location.pathname.startsWith("/projects");
 
   return (
     <div
-      className={`glass relative z-20 flex flex-col text-white transition-[width] duration-300 ease-out ${
+      className={`clay relative z-20 flex flex-col text-white transition-[width] duration-300 ease-out ${
         isCollapsed ? "w-20" : "w-64"
       }`}
       style={{ borderTop: 0, borderBottom: 0, borderLeft: 0 }}
@@ -52,7 +54,7 @@ export default function Sidebar({ onNewProjectClick }) {
             } ${isCollapsed ? "justify-center" : ""}`}
           >
             <span
-              className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-brand-400 to-accent-400 transition-opacity ${
+              className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-400 transition-opacity ${
                 onProjects ? "opacity-100" : "opacity-0"
               }`}
             />
@@ -65,9 +67,10 @@ export default function Sidebar({ onNewProjectClick }) {
       <div className="flex-1" />
 
       <div className="border-t border-white/[0.06] p-4">
-        <div className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"}`}>
+        <div className={`flex items-center ${isCollapsed ? "flex-col gap-3" : "gap-3"}`}>
           <UserButton afterSignOutUrl="/" />
-          {!isCollapsed && <span className="text-sm text-gray-400">Profile</span>}
+          {!isCollapsed && <span className="flex-1 text-sm text-gray-400">Profile</span>}
+          <ThemeToggle />
         </div>
       </div>
     </div>

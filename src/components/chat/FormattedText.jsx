@@ -2,21 +2,28 @@
 // source markers such as [S1], which show as small badges. No HTML is ever injected, so the text of a
 // document cannot add markup to the page.
 
+// A citation such as [S1] or [S1, S3]
+const CITATION = /^\[S\d+(?:\s*,\s*S\d+)*\]$/;
+
 function renderInline(text) {
-  return text.split(/(\*\*[^*]+\*\*|\[S\d+\])/g).map((part, i) => {
+  return text.split(/(\*\*[^*]+\*\*|\[S\d+(?:\s*,\s*S\d+)*\])/g).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       return <strong key={i}>{part.slice(2, -2)}</strong>;
     }
-    if (/^\[S\d+\]$/.test(part)) {
-      return (
-        <span
-          key={i}
-          title={`Source ${part.slice(1, -1)}`}
-          className="mx-0.5 inline-flex -translate-y-px items-center rounded-md bg-brand-500/20 px-1.5 text-[10px] font-semibold leading-4 text-brand-400 ring-1 ring-brand-500/30"
-        >
-          {part.slice(1, -1)}
-        </span>
-      );
+    if (CITATION.test(part)) {
+      return part
+        .slice(1, -1)
+        .split(",")
+        .map((label) => label.trim())
+        .map((label, j) => (
+          <span
+            key={`${i}-${j}`}
+            title={`Source ${label}`}
+            className="mx-0.5 inline-flex -translate-y-px items-center rounded-md bg-brand-500/20 px-1.5 text-[10px] font-semibold leading-4 text-brand-400 ring-1 ring-brand-500/30"
+          >
+            {label}
+          </span>
+        ));
     }
     return part;
   });

@@ -212,8 +212,8 @@ describe("chat progress, sources and shortcuts", () => {
   it("C04 a suggestion chip fills the message box", async () => {
     const user = userEvent.setup();
     renderChat();
-    await user.click(await screen.findByText("Summarize my documents"));
-    expect(screen.getByLabelText("Message")).toHaveValue("Summarize my documents");
+    await user.click(await screen.findByText("List any dates, names or numbers that matter"));
+    expect(screen.getByLabelText("Message")).toHaveValue("List any dates, names or numbers that matter");
   });
 
   it("C05 the copy button puts the answer on the clipboard and shows a notice", async () => {
